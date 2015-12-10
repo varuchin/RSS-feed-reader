@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.Collection;
 
 @Path("/rss")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_XML)
 public class RssService {
 
     private RssItemDAO dao;

@@ -10,7 +10,7 @@ import java.util.Locale;
 
 public class Run {
     public static final String BASE_URI = "http://localhost:8081";
-    public static final String driver = "oracle.jdbc.driver.OracleDriver";
+    //public static final String driver = "oracle.jdbc.driver.OracleDriver";
 
 
     public static HttpServer startServer() {
