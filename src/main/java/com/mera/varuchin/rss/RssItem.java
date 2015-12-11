@@ -10,10 +10,11 @@ import java.util.Date;
 public class RssItem {
 
     /**
-     * –¿«Œ¡–¿“‹—ﬂ  ¿  √≈Õ≈–»“‹ ID
+     *
+     *
      */
     @Id
-    //@GeneratedValue(strategy=SEQUENCE, generator="RSS_SEQ")
+    @GeneratedValue(strategy=GenerationType.SEQUENCE)
     @Column(name="ID")
     private Long id;
 
@@ -27,13 +28,22 @@ public class RssItem {
     private String description= null;
 
     @Column(name="PUB_DATE")
+    @Temporal(value=TemporalType.DATE)
     private Date pubDate= null;
 
-    @Column(name="link")
+    @Column(name="LINK")
     private URL link = null;
 
     public RssItem(){}
 
+
+    public RssItem(String name, String title, String description, Date pubDate, URL link){
+        this.name = name;
+        this.title = title;
+        this.description = description;
+        this.pubDate = pubDate;
+        this.link = link;
+    }
     public RssItem(Long id, String name, String title, String description, Date pubDate, URL link) {
         this.id = id;
         this.name = name;

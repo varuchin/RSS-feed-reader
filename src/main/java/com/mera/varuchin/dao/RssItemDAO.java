@@ -9,6 +9,7 @@ import java.util.Collection;
 public interface RssItemDAO {
 
     void add(RssItem rssItem);
+    void add(URL url, String name);
     void remove(Long id);
     void update(RssItem rssItem);
     void update(RssItem rssItem, String name);
