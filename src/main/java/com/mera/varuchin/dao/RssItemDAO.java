@@ -1,9 +1,11 @@
 package com.mera.varuchin.dao;
 
 import com.mera.varuchin.rss.RssItem;
+import com.mera.varuchin.rss.SourceRSS;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.Map;
 
 
 public interface RssItemDAO {
@@ -16,8 +18,8 @@ public interface RssItemDAO {
     void update(RssItem rssItem, URL url);
     void update(RssItem rssItem, String name, URL url);
     RssItem getById(long id);
-    RssItem getByRssSource(RssItem rssItem);
+    SourceRSS getByRssSource(RssItem rssItem);
     Collection<RssItem> getAllRss();
-    Collection<String> getTopWords(RssItem rssItem);
+    Map<String, Integer> getTopWords(RssItem rssItem);
     Collection<RssItem> getPaginatedList();
 }

@@ -1,7 +1,8 @@
 package com.mera.varuchin.dao;
 
-import com.mera.varuchin.HibernateUtil;
+import com.mera.varuchin.ServiceORM;
 import com.mera.varuchin.rss.RssItem;
+import com.mera.varuchin.rss.SourceRSS;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.w3c.dom.Document;
@@ -14,9 +15,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 import java.util.stream.Stream;
 
 
@@ -27,7 +26,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     public void add(RssItem rssItem) {
         Session session = null;
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
             session.save(rssItem);
             session.getTransaction().commit();
@@ -41,6 +40,7 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void add(URL feedURL, String name) {
+//        int count = 0;
         ArrayList<RssItem> rssItems = new ArrayList<>();
         try {
             HttpURLConnection connection = (HttpURLConnection) feedURL.openConnection();
@@ -104,7 +104,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         }
         Session session = null;
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
             session.delete(rssItem);
             session.getTransaction().commit();
@@ -118,13 +118,14 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void update(RssItem rssItem) {
-        if (rssItem.equals(null)) {
+        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+        if (origin.equals(null)) {
             System.err.println("Not found RssItem!");
             return;
         }
         Session session = null;
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             if (!rssItem.equals(null)) {
                 String hqlUpdateName =
                         "UPDATE RSS SET RSS.NAME " +
@@ -177,7 +178,8 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void update(RssItem rssItem, String name) {
-        if (rssItem.equals(null)) {
+        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+        if (origin.equals(null)) {
             System.err.println("Not found RssItem!");
             return;
         }
@@ -185,7 +187,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         try {
             String hqlUpdate = "UPDATE RSS SET RSS.NAME = :newName WHERE RSS.NAME = :oldName";
 
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             session.createQuery(hqlUpdate).setString("newName", name)
                     .setString("oldName", rssItem.getName())
                     .executeUpdate();
@@ -200,7 +202,8 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void update(RssItem rssItem, URL url) {
-        if (rssItem.equals(null)) {
+        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+        if (origin.equals(null)) {
             System.err.println("Not found RssItem!");
             return;
         }
@@ -208,7 +211,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         try {
             String hqlUpdate = "UPDATE RSS SET RSS.LINK = :newLink WHERE RSS.LINK = :oldLink";
 
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             session.createQuery(hqlUpdate).setString("newLink", url.toString())
                     .setString("oldLink", rssItem.getLink().toString())
                     .executeUpdate();
@@ -224,13 +227,15 @@ public class RssItemDAOImpl implements RssItemDAO {
     //��� ������� ����� � ����� ������?
     @Override
     public void update(RssItem rssItem, String name, URL url) {
-        if (rssItem.equals(null)) {
+        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+        if (origin.equals(null)) {
             System.err.println("Not found RssItem!");
             return;
         }
+
         Session session = null;
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             String hqlUpdateName =
                     "UPDATE RSS SET RSS.NAME = :newName WHERE RSS.NAME = :oldName";
             String hqlUpdateLink =
@@ -259,7 +264,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         Session session = null;
 
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
+            session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
 
             result = (RssItem) session.get(RssItem.class, id);
@@ -276,12 +281,14 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public Collection<RssItem> getAllRss() {
-        Collection<RssItem> result = new ArrayList<>();
+        Collection<RssItem> items = new ArrayList<>();
+        //Collection<String> result = new ArrayList<>();
         Session session = null;
         try {
-            session = HibernateUtil.getSessionFactory().openSession();
-            Query query = session.createQuery("from RSS");
-            result = query.list();
+            session = ServiceORM.getSessionFactory().openSession();
+            Query query = session.createQuery("from RssItem");
+            items = query.list();
+            //result = XmlService.buildXML(items);
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("ERROR ERROR ERROR");
@@ -289,17 +296,51 @@ public class RssItemDAOImpl implements RssItemDAO {
             if (session != null && session.isOpen())
                 session.close();
         }
+        return items;
+    }
+
+    @Override
+    public SourceRSS getByRssSource(RssItem rssItem) {
+        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+
+        if (origin.equals(null)) {
+            System.err.println("No such RSS Item.");
+            return null;
+        } else
+            return rssItem.getSourceRSS();
+    }
+
+    @Override
+    public Map<String, Integer> getTopWords(RssItem rssItem) {
+
+        Map<String, Integer> resultation;
+        Map<String, Integer> frequency = new HashMap<>();
+        StringBuilder builder = new StringBuilder();
+        builder.append(rssItem.getTitle() + " ");
+        builder.append(rssItem.getDescription());
+
+        String[] words = builder.toString().split("[ .,?!]+");
+
+        Stream.of(words).forEach(string -> {
+            Integer previousValue = 1;
+            if (!frequency.containsKey(string)) {
+                frequency.put(string, previousValue);
+            } else if (frequency.containsKey(string)) {
+                frequency.put(string, frequency.get(string) + 1);
+                previousValue++;
+            }
+        });
+
+        SortedMap<String, Integer> result = new TreeMap<>();
+        result.putAll(frequency);
+
+//        Collection<String> topWords = new ArrayList<>();
+//
+//        Stream.of(result.keySet()).limit(6).forEach(string -> {
+//            topWords.add(string.toString());
+//        });
+
         return result;
-    }
-
-    @Override
-    public RssItem getByRssSource(RssItem rssItem) {
-        return null;
-    }
-
-    @Override
-    public Collection<String> getTopWords(RssItem rssItem) {
-        return null;
     }
 
     @Override
