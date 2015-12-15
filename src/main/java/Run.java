@@ -30,13 +30,13 @@ public class Run {
     public static void main(String[] args) throws IOException, SQLException {
         Locale.setDefault(Locale.ENGLISH);
         final HttpServer server = startServer();
-       // installDriver();
-        RssItem rssItem = new RssItem("asf", "a", "a", new Date(12,04,12),
+        // installDriver();
+        RssItem rssItem = new RssItem("asf", "a", "a", new Date(12, 04, 12),
                 new URL("http://x-stream.github.io/"));
         RssItem rssItem1 = new RssItem("a!", "a  a a a aa aa aa aa aawrrg d d d d d tfrhdfgsr sedse a",
-                "a safasf asdfas a .", new Date(12,04,12),
+                "a safasf asdfas a .", new Date(12, 04, 12),
                 new URL("http://x-stream.github.io/"));
-        RssItem rssItem2 = new RssItem("asf", "af", "afs", new Date(12,04,12),
+        RssItem rssItem2 = new RssItem("asf", "af", "afs", new Date(12, 04, 12),
                 new URL("http://x-stream.github.io/"));
 
         Collection<RssItem> list = new ArrayList<>();
@@ -45,11 +45,13 @@ public class Run {
         list.add(rssItem1);
         list.add(rssItem2);
 
-        RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
-       rssItemDAO.getTopWords(rssItem1);
 
-        System.out.println(rssItemDAO.getTopWords(rssItem1));
-       // XStream xStream = new XStream();
+        RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
+        rssItemDAO.add(new URL("http://rtfm.merann.ru"), "Name");
+
+
+
+        // XStream xStream = new XStream();
         //System.out.println(XmlService.buildXML(list));
 //        System.out.println(list);
 //        for(int i = 0; i<list.size(); i++){

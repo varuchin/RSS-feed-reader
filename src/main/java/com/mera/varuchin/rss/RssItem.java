@@ -12,47 +12,51 @@ public class RssItem {
 
 
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    @Column(name="ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "ID", nullable = false)
     private Long id;
 
-    @Column(name="NAME", length = 35)
+    @Column(name = "NAME", length = 35)
     private String name = null;
 
-    @Column(name="TITLE", length = 80, nullable = false)
-    private String title= null;
+    @Column(name = "TITLE", length = 80, nullable = false)
+    private String title = null;
 
-    @Column(name="DESCRIPTION", length = 150)
-    private String description= null;
+    @Column(name = "DESCRIPTION", length = 150)
+    private String description = null;
 
-    @Column(name="PUB_DATE")
-    @Temporal(value=TemporalType.DATE)
-    private Date pubDate= null;
+    @Column(name = "PUB_DATE")
+    @Temporal(value = TemporalType.DATE)
+    private Date pubDate = null;
 
-    @Column(name="LINK", length = 150, nullable = false)
+    @Column(name = "LINK", length = 150, nullable = false)
     private URL link = null;
 
-    private transient SourceRSS sourceRSS = null;
+    private transient SourceRSS sourceRSS = new SourceRSS(this.title, this.link);
 
     private transient Collection<String> topWords = null;
 
-    public RssItem(){}
+    public RssItem() {
+    }
 
 
-    public RssItem(String name, String title, String description, Date pubDate, URL link){
-        this.name = name;
+    public RssItem(String name, String title, String description, Date pubDate, URL link) {
+        this.name = name.toUpperCase();
         this.title = title;
         this.description = description;
         this.pubDate = pubDate;
         this.link = link;
+        this.sourceRSS = new SourceRSS(title, link);
     }
+
     public RssItem(Long id, String name, String title, String description, Date pubDate, URL link) {
         this.id = id;
-        this.name = name;
+        this.name = name.toUpperCase();
         this.title = title;
         this.description = description;
         this.pubDate = pubDate;
         this.link = link;
+        this.sourceRSS = new SourceRSS(title, link);
     }
 
     public Long getId() {
@@ -64,11 +68,11 @@ public class RssItem {
     }
 
     public String getName() {
-        return name;
+        return name.toUpperCase();
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name.toUpperCase();
     }
 
     public String getTitle() {
@@ -103,13 +107,15 @@ public class RssItem {
         this.link = link;
     }
 
-    public void setSourceRss(SourceRSS sourceRSS){
+    public void setSourceRss(SourceRSS sourceRSS) {
         this.sourceRSS = sourceRSS;
     }
 
-    public SourceRSS getSourceRSS(){
+    public SourceRSS getSourceRSS() {
         return sourceRSS;
     }
+
+
     @Override
     public String toString() {
         return "RssItem{" +

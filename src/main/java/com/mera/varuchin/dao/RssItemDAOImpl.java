@@ -1,23 +1,26 @@
 package com.mera.varuchin.dao;
 
 import com.mera.varuchin.ServiceORM;
+import com.mera.varuchin.pagination.Pageable;
 import com.mera.varuchin.rss.RssItem;
-import com.mera.varuchin.rss.SourceRSS;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Stream;
-
+import  org.apache.http.client.*;
 
 public class RssItemDAOImpl implements RssItemDAO {
 
@@ -37,17 +40,24 @@ public class RssItemDAOImpl implements RssItemDAO {
                 session.close();
         }
     }
+//1)p0
 
     @Override
     public void add(URL feedURL, String name) {
 //        int count = 0;
         ArrayList<RssItem> rssItems = new ArrayList<>();
         try {
-            HttpURLConnection connection = (HttpURLConnection) feedURL.openConnection();
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStream inputStream = connection.getInputStream();
 
-                DocumentBuilderFactory documentBuilderFactory =
+            
+             //готов
+             //переделывать
+//            HttpURLConnection connection = (HttpURLConnection) feedURL.openConnection();
+
+//            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+//                InputStream inputStream = connection.getInputStream();
+            //InputStream inputStream = httpClient.getInputStream();
+
+            DocumentBuilderFactory documentBuilderFactory =
                         DocumentBuilderFactory.newInstance();
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
@@ -58,7 +68,10 @@ public class RssItemDAOImpl implements RssItemDAO {
 
                 if (nodeList.getLength() > 0) {
                     Stream.of(nodeList).parallel().forEach((node) -> {
+
+                        //тут трабл
                         Element entry = (Element) nodeList.item(0);
+                        //переделать цикл
 
                         Element titleElem = (Element) entry
                                 .getElementsByTagName("title").item(0);
@@ -87,12 +100,16 @@ public class RssItemDAOImpl implements RssItemDAO {
                         rssItems.add(rssItem);
                     });
                 }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         rssItems.stream().forEach(rssItem -> add(rssItem));
+        System.out.println(rssItems);
     }
 
     @Override
@@ -118,61 +135,61 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void update(RssItem rssItem) {
-        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+        RssItem origin = new RssItemDAOImpl().getByLink(rssItem.getLink());
+        System.out.println(origin);
         if (origin.equals(null)) {
             System.err.println("Not found RssItem!");
             return;
-        }
-        Session session = null;
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
-            if (!rssItem.equals(null)) {
+        } else {
+            Session session = null;
+            try {
+                session = ServiceORM.getSessionFactory().openSession();
+                session.beginTransaction();
                 String hqlUpdateName =
-                        "UPDATE RSS SET RSS.NAME " +
-                                "= :newNAME WHERE RSS.ID = :ID";
+                        "UPDATE RssItem SET NAME " +
+                                "= :newNAME WHERE ID = :ID";
                 String hqlUpdateTitle =
-                        "UPDATE RSS SET RSS.TITLE " +
-                                "= :newTITLE WHERE RSS.ID = :ID";
+                        "UPDATE RssItem SET TITLE " +
+                                "= :newTITLE WHERE ID = :ID";
                 String hqlUpdateDescription =
-                        "UPDATE RSS SET RSS.DESCRIPTION " +
-                                "= :newDESCRIPTION" + " WHERE RSS.ID = :ID";
+                        "UPDATE RssItem SET DESCRIPTION " +
+                                "= :newDESCRIPTION" + " WHERE ID = :ID";
                 String hqlUpdatePubDate =
-                        "UPDATE RSS SET RSS.PUB_DATE " +
-                                "= :newPUB_DATE WHERE RSS.ID = :ID";
+                        "UPDATE RssItem SET PUB_DATE " +
+                                "= :newPUB_DATE WHERE ID = :ID";
                 String hqlUpdateLink =
-                        "UPDATE RSS SET RSS.LINK " +
-                                "= :newLink WHERE RSS.ID = :ID";
+                        "UPDATE RssItem SET LINK " +
+                                "= :newLINK WHERE ID = :ID";
 
                 if (rssItem.getName() != null)
-                    session.createQuery(hqlUpdateName).setString("newNAME", rssItem.getName())
-                            .setString("ID", rssItem.getId().toString()).executeUpdate();
+                    session.createQuery(hqlUpdateName).setParameter("newNAME", rssItem.getName())
+                            .setParameter("ID", origin.getId()).executeUpdate();
 
                 if (rssItem.getTitle() != null)
-                    session.createQuery(hqlUpdateTitle).setString("newTITLE", rssItem.getTitle())
-                            .setString("ID", rssItem.getId().toString()).executeUpdate();
+                    session.createQuery(hqlUpdateTitle).setParameter("newTITLE", rssItem.getTitle())
+                            .setParameter("ID", origin.getId()).executeUpdate();
 
                 if (rssItem.getDescription() != null)
-                    session.createQuery(hqlUpdateDescription).setString("newDESCRIPTION",
+                    session.createQuery(hqlUpdateDescription).setParameter("newDESCRIPTION",
                             rssItem.getDescription())
-                            .setString("ID", rssItem.getId().toString()).executeUpdate();
+                            .setParameter("ID", origin.getId()).executeUpdate();
 
                 if (rssItem.getPubDate() != null)
-                    session.createQuery(hqlUpdatePubDate).setString("newPUB_DATE", rssItem.getPubDate()
-                            .toString()).setString("ID", rssItem.getId().toString()).executeUpdate();
+                    session.createQuery(hqlUpdatePubDate).setParameter("newPUB_DATE", rssItem.getPubDate()
+                            .toString()).setParameter("ID", origin.getId()).executeUpdate();
 
                 if (rssItem.getLink() != null)
-                    session.createQuery(hqlUpdateLink).setString("newLINK", rssItem.getLink().toString())
-                            .setString("ID", rssItem.getId().toString()).executeUpdate();
+                    session.createQuery(hqlUpdateLink).setParameter("newLINK", rssItem.getLink().toString())
+                            .setParameter("ID", origin.getId()).executeUpdate();
+
 
                 session.getTransaction().commit();
-
-            } else if (session != null && session.isOpen())
-                session.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (session != null && session.isOpen())
+                    session.close();
+            }
         }
     }
 
@@ -185,9 +202,11 @@ public class RssItemDAOImpl implements RssItemDAO {
         }
         Session session = null;
         try {
-            String hqlUpdate = "UPDATE RSS SET RSS.NAME = :newName WHERE RSS.NAME = :oldName";
+            String hqlUpdate = "UPDATE RssItem SET NAME = :newName" +
+                    " WHERE NAME = :oldName";
 
             session = ServiceORM.getSessionFactory().openSession();
+            session.beginTransaction();
             session.createQuery(hqlUpdate).setString("newName", name)
                     .setString("oldName", rssItem.getName())
                     .executeUpdate();
@@ -209,9 +228,11 @@ public class RssItemDAOImpl implements RssItemDAO {
         }
         Session session = null;
         try {
-            String hqlUpdate = "UPDATE RSS SET RSS.LINK = :newLink WHERE RSS.LINK = :oldLink";
+            String hqlUpdate = "UPDATE RssItem SET LINK = :newLink " +
+                    "WHERE LINK = :oldLink";
 
             session = ServiceORM.getSessionFactory().openSession();
+            session.beginTransaction();
             session.createQuery(hqlUpdate).setString("newLink", url.toString())
                     .setString("oldLink", rssItem.getLink().toString())
                     .executeUpdate();
@@ -236,10 +257,11 @@ public class RssItemDAOImpl implements RssItemDAO {
         Session session = null;
         try {
             session = ServiceORM.getSessionFactory().openSession();
+            session.beginTransaction();
             String hqlUpdateName =
-                    "UPDATE RSS SET RSS.NAME = :newName WHERE RSS.NAME = :oldName";
+                    "UPDATE RssItem SET NAME = :newName WHERE NAME = :oldName";
             String hqlUpdateLink =
-                    "UPDATE RSS SET RSS.LINK = :newLink WHERE RSS.LINK = :oldLink";
+                    "UPDATE RssItem SET LINK = :newLink WHERE LINK = :oldLink";
             session.createQuery(hqlUpdateName).setString("newName", name)
                     .setString("oldName", rssItem.getName())
                     .executeUpdate();
@@ -259,15 +281,15 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public RssItem getById(long id) {
+    public RssItem getById(Long id) {
         RssItem result = null;
         Session session = null;
 
         try {
             session = ServiceORM.getSessionFactory().openSession();
-            session.beginTransaction();
-
+            // session.beginTransaction();
             result = (RssItem) session.get(RssItem.class, id);
+            System.err.println(result);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -286,7 +308,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         Session session = null;
         try {
             session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("from RssItem");
+            Query query = session.createQuery("FROM RssItem");
             items = query.list();
             //result = XmlService.buildXML(items);
         } catch (Exception e) {
@@ -300,20 +322,67 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public SourceRSS getByRssSource(RssItem rssItem) {
-        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+    public Collection<RssItem> getRssSortedByName(String name) {
+        Collection<RssItem> items = new ArrayList<>();
+        Session session = null;
+        try {
 
-        if (origin.equals(null)) {
-            System.err.println("No such RSS Item.");
-            return null;
-        } else
-            return rssItem.getSourceRSS();
+            String param = "%" + name + "%";
+            session = ServiceORM.getSessionFactory().openSession();
+            Query query = session.createQuery("FROM RssItem WHERE NAME LIKE " +
+                    ":NAME ORDER BY NAME ASC");
+
+//            Criteria criteria = session.createCriteria(RssItem.class);
+//            criteria.add(Restrictions.ilike("NAME", param));
+
+            query.setParameter("NAME", param);
+            System.err.println(query.toString());
+
+            System.err.println(items);
+            items = query.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return items;
     }
+
+//    @Override
+//    public SourceRSS getByRssSource(RssItem rssItem) {
+//        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
+//
+//        if (origin == null) {
+//            System.err.println("No such RSS Item.");
+//            return null;
+//        } else
+//            return rssItem.getSourceRSS();
+//    }
+
+    @Override
+    public RssItem getByLink(URL link) {
+        Session session = null;
+
+        try {
+            session = ServiceORM.getSessionFactory().openSession();
+            String hqlQuery = "FROM RssItem WHERE LINK = :link";
+            Query query = session.createQuery(hqlQuery).setString("link", link.toString());
+            return (RssItem) query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return null;
+    }
+
+    //    cделать отображение только 5-ти слов
 
     @Override
     public Map<String, Integer> getTopWords(RssItem rssItem) {
 
-        Map<String, Integer> resultation;
         Map<String, Integer> frequency = new HashMap<>();
         StringBuilder builder = new StringBuilder();
         builder.append(rssItem.getTitle() + " ");
@@ -334,17 +403,46 @@ public class RssItemDAOImpl implements RssItemDAO {
         SortedMap<String, Integer> result = new TreeMap<>();
         result.putAll(frequency);
 
-//        Collection<String> topWords = new ArrayList<>();
-//
-//        Stream.of(result.keySet()).limit(6).forEach(string -> {
-//            topWords.add(string.toString());
-//        });
 
         return result;
     }
 
     @Override
-    public Collection<RssItem> getPaginatedList() {
+    public Map<String, URL> getAllSourcesRss() {
+        Collection<RssItem> collection = getAllRss();
+        Map<String, URL> result = new HashMap<>();
+
+        //System.out.println(collection);
+        collection.stream().parallel().forEach(rssItem -> {
+            result.put(rssItem.getTitle(), rssItem.getLink());
+        });
+        System.out.println(result);
+        return result;
+    }
+
+    @Override
+    public RssItem getBySource(String title, URL link) {
+        Map<String, URL> sources = getAllSourcesRss();
+
+        if (sources.containsKey(title) && sources.containsValue(link)) {
+            RssItem item = new RssItemDAOImpl().getByLink(link);
+            return item;
+        }
         return null;
+    }
+
+    //думать
+    @Override
+    public Pageable<RssItem> getPaginatedListFiltered(String name) {
+        Collection<RssItem> collection = getRssSortedByName("asf");
+        List items;
+        if (collection instanceof List)
+            items = (List) collection;
+        else
+            items = new ArrayList(collection);
+
+        Pageable<RssItem> paginator = new Pageable<>(items);
+
+        return paginator;
     }
 }
