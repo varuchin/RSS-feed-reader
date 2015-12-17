@@ -1,26 +1,29 @@
 package com.mera.varuchin.dao;
 
 import com.mera.varuchin.ServiceORM;
-import com.mera.varuchin.pagination.Pageable;
 import com.mera.varuchin.rss.RssItem;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import  org.apache.http.client.*;
 
 public class RssItemDAOImpl implements RssItemDAO {
 
@@ -40,238 +43,107 @@ public class RssItemDAOImpl implements RssItemDAO {
                 session.close();
         }
     }
-//1)p0
 
     @Override
-    public void add(URL feedURL, String name) {
-//        int count = 0;
+    public void add(URL link) {
         ArrayList<RssItem> rssItems = new ArrayList<>();
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         try {
+            HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
+            RequestConfig config = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .build();
+            HttpGet httpGet = new HttpGet(link.toURI());
+            httpGet.setConfig(config);
 
-            
-             //готов
-             //переделывать
-//            HttpURLConnection connection = (HttpURLConnection) feedURL.openConnection();
+            CloseableHttpResponse response = httpClient.execute(httpGet);
+            HttpEntity httpEntity = response.getEntity();
 
-//            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-//                InputStream inputStream = connection.getInputStream();
-            //InputStream inputStream = httpClient.getInputStream();
+            if (httpEntity != null) {
+                InputStream inputStream = httpEntity.getContent();
+                try {
+                    //inputStream.read();
+                    DocumentBuilderFactory documentBuilderFactory =
+                            DocumentBuilderFactory.newInstance();
+                    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-            DocumentBuilderFactory documentBuilderFactory =
-                        DocumentBuilderFactory.newInstance();
-                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+                    Document document = documentBuilder.parse(inputStream);
+                    Element element = document.getDocumentElement();
 
-                Document document = documentBuilder.parse(inputStream);
-                Element element = document.getDocumentElement();
+//                    Reader reader = new InputStreamReader(inputStream);
+//                    InputSource is = new InputSource(reader);
+//
+//                    Document document = documentBuilder.parse(is);
+//                    // document.getDocumentElement().normalize();
+//                    Element element = document.getDocumentElement();
+                    NodeList nodeList = element.getElementsByTagName("item");
 
-                NodeList nodeList = element.getElementsByTagName("item");
+                    if (nodeList.getLength() > 0) {
 
-                if (nodeList.getLength() > 0) {
-                    Stream.of(nodeList).parallel().forEach((node) -> {
+                        IntStream.range(0, nodeList.getLength()).forEach(index -> {
 
-                        //тут трабл
-                        Element entry = (Element) nodeList.item(0);
-                        //переделать цикл
+                            Element entry = (Element) nodeList.item(index);
 
-                        Element titleElem = (Element) entry
-                                .getElementsByTagName("title").item(0);
 
-                        Element descriptionElem = (Element) entry
-                                .getElementsByTagName("description").item(0);
+                            Element titleElem = (Element) entry
+                                    .getElementsByTagName("title").item(0);
 
-                        Element pubDateElem = (Element) entry
-                                .getElementsByTagName("pubDate").item(0);
+                            Element descriptionElem = (Element) entry
+                                    .getElementsByTagName("description").item(0);
 
-                        Element linkElem = (Element) entry
-                                .getElementsByTagName("link").item(0);
+                            Element pubDateElem = (Element) entry
+                                    .getElementsByTagName("pubDate").item(0);
 
-                        String title = titleElem.getFirstChild().getNodeValue();
-                        String description = descriptionElem.getFirstChild().getNodeValue();
-                        Date pubDate = new Date(pubDateElem.getFirstChild().getNodeValue());
+                            Element linkElem = (Element) entry
+                                    .getElementsByTagName("link").item(0);
 
-                        URL link = null;
-                        try {
-                            link = new URL(linkElem.getFirstChild().getNodeValue());
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        }
+                            String title = titleElem.getFirstChild().getTextContent();
+                            String description = descriptionElem.getFirstChild().getTextContent();
+                            Date pubDate = new Date(pubDateElem.getFirstChild().getTextContent());
 
-                        RssItem rssItem = new RssItem(name, title, description, pubDate, link);
-                        rssItems.add(rssItem);
-                    });
+                            URL url = null;
+                            try {
+                                url = new URL(linkElem.getFirstChild().getNodeValue());
+                            } catch (MalformedURLException e) {
+                                e.printStackTrace();
+                            }
+                            RssItem rssItem = new RssItem(title, description, pubDate, url);
+                            rssItems.add(rssItem);
+                        });
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    response.close();
                 }
-            } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        rssItems.stream().forEach(rssItem -> add(rssItem));
-        System.out.println(rssItems);
-    }
-
-    @Override
-    public void remove(Long id) {
-        RssItem rssItem = new RssItemDAOImpl().getById(id);
-        if (rssItem.equals(null)) {
-            System.err.println("No such element.");
-            return;
-        }
-        Session session = null;
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
-            session.beginTransaction();
-            session.delete(rssItem);
-            session.getTransaction().commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-    }
-
-    @Override
-    public void update(RssItem rssItem) {
-        RssItem origin = new RssItemDAOImpl().getByLink(rssItem.getLink());
-        System.out.println(origin);
-        if (origin.equals(null)) {
-            System.err.println("Not found RssItem!");
-            return;
-        } else {
-            Session session = null;
-            try {
-                session = ServiceORM.getSessionFactory().openSession();
-                session.beginTransaction();
-                String hqlUpdateName =
-                        "UPDATE RssItem SET NAME " +
-                                "= :newNAME WHERE ID = :ID";
-                String hqlUpdateTitle =
-                        "UPDATE RssItem SET TITLE " +
-                                "= :newTITLE WHERE ID = :ID";
-                String hqlUpdateDescription =
-                        "UPDATE RssItem SET DESCRIPTION " +
-                                "= :newDESCRIPTION" + " WHERE ID = :ID";
-                String hqlUpdatePubDate =
-                        "UPDATE RssItem SET PUB_DATE " +
-                                "= :newPUB_DATE WHERE ID = :ID";
-                String hqlUpdateLink =
-                        "UPDATE RssItem SET LINK " +
-                                "= :newLINK WHERE ID = :ID";
-
-                if (rssItem.getName() != null)
-                    session.createQuery(hqlUpdateName).setParameter("newNAME", rssItem.getName())
-                            .setParameter("ID", origin.getId()).executeUpdate();
-
-                if (rssItem.getTitle() != null)
-                    session.createQuery(hqlUpdateTitle).setParameter("newTITLE", rssItem.getTitle())
-                            .setParameter("ID", origin.getId()).executeUpdate();
-
-                if (rssItem.getDescription() != null)
-                    session.createQuery(hqlUpdateDescription).setParameter("newDESCRIPTION",
-                            rssItem.getDescription())
-                            .setParameter("ID", origin.getId()).executeUpdate();
-
-                if (rssItem.getPubDate() != null)
-                    session.createQuery(hqlUpdatePubDate).setParameter("newPUB_DATE", rssItem.getPubDate()
-                            .toString()).setParameter("ID", origin.getId()).executeUpdate();
-
-                if (rssItem.getLink() != null)
-                    session.createQuery(hqlUpdateLink).setParameter("newLINK", rssItem.getLink().toString())
-                            .setParameter("ID", origin.getId()).executeUpdate();
-
-
-                session.getTransaction().commit();
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (session != null && session.isOpen())
-                    session.close();
             }
-        }
-    }
-
-    @Override
-    public void update(RssItem rssItem, String name) {
-        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
-        if (origin.equals(null)) {
-            System.err.println("Not found RssItem!");
-            return;
-        }
-        Session session = null;
-        try {
-            String hqlUpdate = "UPDATE RssItem SET NAME = :newName" +
-                    " WHERE NAME = :oldName";
-
-            session = ServiceORM.getSessionFactory().openSession();
-            session.beginTransaction();
-            session.createQuery(hqlUpdate).setString("newName", name)
-                    .setString("oldName", rssItem.getName())
-                    .executeUpdate();
-            session.getTransaction().commit();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
         }
+        rssItems.stream().forEach(item -> add(item));
     }
 
     @Override
-    public void update(RssItem rssItem, URL url) {
-        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
-        if (origin.equals(null)) {
-            System.err.println("Not found RssItem!");
+    public void remove(URL link) {
+        RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
+        Collection<RssItem> linkedItems = rssItemDAO.getByLink(link);
+        Session session = null;
+
+        if (linkedItems == null) {
+            System.err.println("Not found item to remove.");
             return;
         }
-        Session session = null;
-        try {
-            String hqlUpdate = "UPDATE RssItem SET LINK = :newLink " +
-                    "WHERE LINK = :oldLink";
-
-            session = ServiceORM.getSessionFactory().openSession();
-            session.beginTransaction();
-            session.createQuery(hqlUpdate).setString("newLink", url.toString())
-                    .setString("oldLink", rssItem.getLink().toString())
-                    .executeUpdate();
-            session.getTransaction().commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-    }
-
-    //��� ������� ����� � ����� ������?
-    @Override
-    public void update(RssItem rssItem, String name, URL url) {
-        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
-        if (origin.equals(null)) {
-            System.err.println("Not found RssItem!");
-            return;
-        }
-
-        Session session = null;
         try {
             session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
-            String hqlUpdateName =
-                    "UPDATE RssItem SET NAME = :newName WHERE NAME = :oldName";
-            String hqlUpdateLink =
-                    "UPDATE RssItem SET LINK = :newLink WHERE LINK = :oldLink";
-            session.createQuery(hqlUpdateName).setString("newName", name)
-                    .setString("oldName", rssItem.getName())
-                    .executeUpdate();
-            session.getTransaction().commit();
+            String hqlDelete = "DELETE FROM RssItem WHERE LINK = :link";
+            System.out.println("DELETING");
 
-            session.createQuery(hqlUpdateLink).setString("newLink", url.toString())
-                    .setString("oldLink", rssItem.getLink().toString())
-                    .executeUpdate();
-
+            System.err.println(link.toString());
+            session.createQuery(hqlDelete).setParameter("link", link.toString()).executeUpdate();
             session.getTransaction().commit();
+            System.err.println("Deleted.");
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -281,28 +153,27 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public RssItem getById(Long id) {
-        RssItem result = null;
+    public Collection<RssItem> getItemsWithLink(URL link) {
+        Collection<RssItem> items = new ArrayList<>();
+
         Session session = null;
 
         try {
             session = ServiceORM.getSessionFactory().openSession();
-            // session.beginTransaction();
-            result = (RssItem) session.get(RssItem.class, id);
-            System.err.println(result);
+            Query query = session.createQuery("FROM RssItem WHERE LINK = :link");
+
+            items = query.setParameter("link", link.toString()).list();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (session != null && session.isOpen())
                 session.close();
         }
-
-        return result;
+        return items;
     }
 
-
     @Override
-    public Collection<RssItem> getAllRss() {
+    public Collection<RssItem> getAllItems() {
         Collection<RssItem> items = new ArrayList<>();
         //Collection<String> result = new ArrayList<>();
         Session session = null;
@@ -318,34 +189,7 @@ public class RssItemDAOImpl implements RssItemDAO {
             if (session != null && session.isOpen())
                 session.close();
         }
-        return items;
-    }
-
-    @Override
-    public Collection<RssItem> getRssSortedByName(String name) {
-        Collection<RssItem> items = new ArrayList<>();
-        Session session = null;
-        try {
-
-            String param = "%" + name + "%";
-            session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("FROM RssItem WHERE NAME LIKE " +
-                    ":NAME ORDER BY NAME ASC");
-
-//            Criteria criteria = session.createCriteria(RssItem.class);
-//            criteria.add(Restrictions.ilike("NAME", param));
-
-            query.setParameter("NAME", param);
-            System.err.println(query.toString());
-
-            System.err.println(items);
-            items = query.list();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
+        System.out.println(items);
         return items;
     }
 
@@ -361,14 +205,14 @@ public class RssItemDAOImpl implements RssItemDAO {
 //    }
 
     @Override
-    public RssItem getByLink(URL link) {
+    public Collection<RssItem> getByLink(URL link) {
         Session session = null;
 
         try {
             session = ServiceORM.getSessionFactory().openSession();
             String hqlQuery = "FROM RssItem WHERE LINK = :link";
             Query query = session.createQuery(hqlQuery).setString("link", link.toString());
-            return (RssItem) query.uniqueResult();
+            return query.list();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -378,6 +222,23 @@ public class RssItemDAOImpl implements RssItemDAO {
         return null;
     }
 
+    @Override
+    public RssItem getByTitle(String title) {
+        Session session = null;
+
+        try {
+            session = ServiceORM.getSessionFactory().openSession();
+            String hqlQuery = "FROM RssItem WHERE TITLE = :title";
+            Query query = session.createQuery(hqlQuery).setParameter("title", title);
+            return (RssItem) query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return null;
+    }
     //    cделать отображение только 5-ти слов
 
     @Override
@@ -409,11 +270,11 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public Map<String, URL> getAllSourcesRss() {
-        Collection<RssItem> collection = getAllRss();
+        Collection<RssItem> collection = getAllItems();
         Map<String, URL> result = new HashMap<>();
 
         //System.out.println(collection);
-        collection.stream().parallel().forEach(rssItem -> {
+        collection.stream().forEach(rssItem -> {
             result.put(rssItem.getTitle(), rssItem.getLink());
         });
         System.out.println(result);
@@ -425,24 +286,9 @@ public class RssItemDAOImpl implements RssItemDAO {
         Map<String, URL> sources = getAllSourcesRss();
 
         if (sources.containsKey(title) && sources.containsValue(link)) {
-            RssItem item = new RssItemDAOImpl().getByLink(link);
+            RssItem item = new RssItemDAOImpl().getByTitle(title);
             return item;
         }
         return null;
-    }
-
-    //думать
-    @Override
-    public Pageable<RssItem> getPaginatedListFiltered(String name) {
-        Collection<RssItem> collection = getRssSortedByName("asf");
-        List items;
-        if (collection instanceof List)
-            items = (List) collection;
-        else
-            items = new ArrayList(collection);
-
-        Pageable<RssItem> paginator = new Pageable<>(items);
-
-        return paginator;
     }
 }

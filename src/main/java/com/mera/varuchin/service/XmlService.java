@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-
+@Deprecated
 public class XmlService {
 
     public static void writeXmlFile(Collection<RssItem> list) {

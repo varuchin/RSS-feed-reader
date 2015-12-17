@@ -16,21 +16,28 @@ public class RssItem {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    @Column(name = "NAME", length = 35)
-    private String name = null;
+//    @Column(name = "NAME", length = 35)
+//    private String name = null;
 
-    @Column(name = "TITLE", length = 80, nullable = false)
+    @OneToOne(mappedBy = "RSSFeed")
+    @JoinTable(name = "RSSfeed")
+    @JoinColumn(name = "ID")
+    @Column(name = "FEED_ID", nullable = false)
+    private Long feed_id;
+
+    @Column(name = "TITLE", length = 1000, nullable = false)
     private String title = null;
 
-    @Column(name = "DESCRIPTION", length = 150)
+    @Column(name = "DESCRIPTION", length = 4000)
     private String description = null;
 
     @Column(name = "PUB_DATE")
     @Temporal(value = TemporalType.DATE)
     private Date pubDate = null;
 
-    @Column(name = "LINK", length = 150, nullable = false)
+    @Column(name = "LINK", length = 1000, nullable = false)
     private URL link = null;
+
 
     private transient SourceRSS sourceRSS = new SourceRSS(this.title, this.link);
 
@@ -39,19 +46,23 @@ public class RssItem {
     public RssItem() {
     }
 
-
-    public RssItem(String name, String title, String description, Date pubDate, URL link) {
-        this.name = name.toUpperCase();
+    public RssItem(String title, String description, Date pubDate, URL link) {
         this.title = title;
         this.description = description;
         this.pubDate = pubDate;
         this.link = link;
-        this.sourceRSS = new SourceRSS(title, link);
     }
 
-    public RssItem(Long id, String name, String title, String description, Date pubDate, URL link) {
+    public RssItem(String title, String description, Date pubDate, URL link, Long feed_id) {
+        this.title = title;
+        this.description = description;
+        this.pubDate = pubDate;
+        this.link = link;
+        this.feed_id = feed_id;
+    }
+
+    public RssItem(Long id, String title, String description, Date pubDate, URL link) {
         this.id = id;
-        this.name = name.toUpperCase();
         this.title = title;
         this.description = description;
         this.pubDate = pubDate;
@@ -67,12 +78,12 @@ public class RssItem {
         this.id = id;
     }
 
-    public String getName() {
-        return name.toUpperCase();
+    public Long getFeed_id() {
+        return feed_id;
     }
 
-    public void setName(String name) {
-        this.name = name.toUpperCase();
+    public void setFeed_id(Long feed_id) {
+        this.feed_id = feed_id;
     }
 
     public String getTitle() {
@@ -107,9 +118,11 @@ public class RssItem {
         this.link = link;
     }
 
+
     public void setSourceRss(SourceRSS sourceRSS) {
         this.sourceRSS = sourceRSS;
     }
+
 
     public SourceRSS getSourceRSS() {
         return sourceRSS;
@@ -119,7 +132,6 @@ public class RssItem {
     @Override
     public String toString() {
         return "RssItem{" +
-                "name='" + name + '\'' +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", pubDate=" + pubDate +
