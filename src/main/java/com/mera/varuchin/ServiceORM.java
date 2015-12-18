@@ -9,10 +9,13 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 public class ServiceORM {
     private static SessionFactory sessionFactory = setUp();
 
+
     protected static SessionFactory setUp() {
 
         final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .configure().build();
+        System.err.println("REGISTRY");
+        System.out.println(registry);
         try {
             return new MetadataSources(registry).buildMetadata().buildSessionFactory();
         } catch (Exception e) {

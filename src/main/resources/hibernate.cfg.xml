@@ -10,10 +10,10 @@
         <property name="dialect">org.hibernate.dialect.Oracle10gDialect</property>
         <property name="connection.username">system</property>
         <property name="connection.password">oblivion</property>
-        <property name="show_sql">false</property>
+        <property name="show_sql">true</property>
         <property name="format_sql">true</property>
         <property name="use_sql_comments">true</property>
-        <property name="hibernate.hbm2ddl.auto">create</property>
+        <property name="hibernate.hbm2ddl.auto">update</property>
         <mapping class="com.mera.varuchin.rss.RssItem"/>
         <mapping class="com.mera.varuchin.rss.RssFeed"/>
 

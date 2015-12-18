@@ -10,9 +10,14 @@ public class RssFeed {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @OneToOne(mappedBy = "RSS")
-    @JoinTable(name = "RSS")
-    @JoinColumn(name = "FEED_ID")
+//    @OneToOne(mappedBy = "RSS")
+//    @JoinTable(name = "RSS")
+//    @JoinColumn(name = "FEED_ID")
+
+//    @OneToMany(fetch = FetchType.LAZY, mappedBy = "RSSfeed", cascade = CascadeType.REMOVE)
+//    private Set<RssItem> items = new HashSet<>();
+
+
     @Column(name = "ID", nullable = false)
     private Long id;
 
@@ -28,8 +33,6 @@ public class RssFeed {
     public RssFeed() {
     }
 
-    ;
-
     public RssFeed(String name, URL link) {
         this.name = name.toUpperCase();
         this.link = link;
@@ -41,7 +44,7 @@ public class RssFeed {
 //    }
 
     public RssFeed(RssItem rssItem, String name) {
-        this.name = name;
+        this.name = name.toUpperCase();
         this.link = rssItem.getLink();
     }
 

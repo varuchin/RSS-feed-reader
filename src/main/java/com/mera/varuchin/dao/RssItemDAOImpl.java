@@ -123,6 +123,7 @@ public class RssItemDAOImpl implements RssItemDAO {
         rssItems.stream().forEach(item -> add(item));
     }
 
+    //не верный подход
     @Override
     public void remove(URL link) {
         RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
@@ -137,7 +138,6 @@ public class RssItemDAOImpl implements RssItemDAO {
             session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
             String hqlDelete = "DELETE FROM RssItem WHERE LINK = :link";
-            System.out.println("DELETING");
 
             System.err.println(link.toString());
             session.createQuery(hqlDelete).setParameter("link", link.toString()).executeUpdate();
@@ -263,7 +263,6 @@ public class RssItemDAOImpl implements RssItemDAO {
 
         SortedMap<String, Integer> result = new TreeMap<>();
         result.putAll(frequency);
-
 
         return result;
     }

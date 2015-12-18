@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 
 @Path("/rss")
@@ -23,12 +24,36 @@ public class FeedService {
         dao = new RssFeedDAOImpl();
     }
 
+    @GET
+    @Path("/links")
+    public Collection<RssItem> getBySource(@QueryParam("url") URL url){
+        return dao.getNewsFromSource(url);
+    }
+
+    @GET
+    @Path("/feeds/{page}/{pageSize}/{name}")
+    public Collection<RssFeed> getByName(@PathParam("page") int page,
+                                         @PathParam("pageSize") int pageSize,
+                                         @QueryParam("name") String name) {
+
+        return dao.getFeedsByName(page, pageSize, name);
+    }
+
+    @GET
+    @Path("/feeds/{page}/{pageSize}")
+    public ArrayList<RssFeed> listed(@PathParam("page")
+                                     int page, @PathParam("pageSize") int pageSize) {
+        return dao.getAllListed(page, pageSize);
+    }
+
     @POST
     @Path("/feeds")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(RssFeed rssFeed) {
         System.out.println(rssFeed);
         System.out.println(rssFeed.getLink());
+        RssFeed rssFeed1 = dao.getByLink(rssFeed.getLink());
+        System.out.println(rssFeed1);
         if (dao.getByLink(rssFeed.getLink()) == null) {
 
             dao.add(rssFeed);

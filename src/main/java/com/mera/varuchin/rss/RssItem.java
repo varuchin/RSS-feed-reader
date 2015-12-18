@@ -19,11 +19,15 @@ public class RssItem {
 //    @Column(name = "NAME", length = 35)
 //    private String name = null;
 
-    @OneToOne(mappedBy = "RSSFeed")
-    @JoinTable(name = "RSSfeed")
-    @JoinColumn(name = "ID")
-    @Column(name = "FEED_ID", nullable = false)
-    private Long feed_id;
+//    @ManyToOne
+//    @JoinTable(name = "RSSfeed")
+//    @JoinColumn(name = "ID")
+//    @Column(name = "FEED_ID", nullable = false)
+//    private Long feed_id;
+
+//    @ManyToOne()
+//    @JoinColumn(name = "feed_id")
+//    private RssFeed rssFeed;
 
     @Column(name = "TITLE", length = 1000, nullable = false)
     private String title = null;
@@ -53,13 +57,13 @@ public class RssItem {
         this.link = link;
     }
 
-    public RssItem(String title, String description, Date pubDate, URL link, Long feed_id) {
-        this.title = title;
-        this.description = description;
-        this.pubDate = pubDate;
-        this.link = link;
-        this.feed_id = feed_id;
-    }
+//    public RssItem(String title, String description, Date pubDate, URL link, Long feed_id) {
+//        this.title = title;
+//        this.description = description;
+//        this.pubDate = pubDate;
+//        this.link = link;
+//        this.feed_id = feed_id;
+//    }
 
     public RssItem(Long id, String title, String description, Date pubDate, URL link) {
         this.id = id;
@@ -77,14 +81,14 @@ public class RssItem {
     public void setId(Long id) {
         this.id = id;
     }
-
-    public Long getFeed_id() {
-        return feed_id;
-    }
-
-    public void setFeed_id(Long feed_id) {
-        this.feed_id = feed_id;
-    }
+//
+//    public Long getFeed_id() {
+//        return feed_id;
+//    }
+//
+//    public void setFeed_id(Long feed_id) {
+//        this.feed_id = feed_id;
+//    }
 
     public String getTitle() {
         return title;

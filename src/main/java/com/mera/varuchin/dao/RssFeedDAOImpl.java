@@ -3,12 +3,28 @@ package com.mera.varuchin.dao;
 import com.mera.varuchin.ServiceORM;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.stream.IntStream;
 
 
 public class RssFeedDAOImpl implements RSSfeedDAO {
@@ -288,7 +304,6 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         RssFeed result = null;
         Session session = null;
 
-
         try {
             session = ServiceORM.getSessionFactory().openSession();
             result = (RssFeed) session.get(RssFeed.class, id);
@@ -306,6 +321,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
     public RssFeed getByLink(URL link) {
         Session session = null;
         try {
+            System.out.println("ERR");
             session = ServiceORM.getSessionFactory().openSession();
             String hqlQuery = "FROM RssFeed WHERE LINK = :link";
             Query query = session.createQuery(hqlQuery).setParameter("link", link.toString());
@@ -341,11 +357,12 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         Session session = null;
         try {
 
-            String param = "%" + name.toUpperCase() + "%";
+            String param = "%" + name + "%";
             session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("FROM RssFeed WHERE NAME LIKE " +
-                    ":NAME ORDER BY NAME ASC");
+            Query query = session.createQuery("FROM RssFeed WHERE lower(NAME) LIKE lower" +
+                    "(:NAME) ORDER BY NAME ASC");
 
+            System.err.println(param);
             query.setParameter("NAME", param);
             System.err.println(query.toString());
 
@@ -358,6 +375,128 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
                 session.close();
         }
         return feeds;
+    }
+
+    @Override
+    public Collection<RssFeed> getFeedsByName(int page, int pageSize, String name) {
+        Collection<RssFeed> feeds = new ArrayList<>();
+        Session session = null;
+
+        try {
+            String param = "%" + name + "%";
+            session = ServiceORM.getSessionFactory().openSession();
+            Query query = session.createQuery("FROM RssFeed WHERE lower(NAME) LIKE lower" +
+                    "(:NAME) ORDER BY NAME ASC");
+
+            query.setParameter("NAME", param);
+            query.setFirstResult(page);
+            query.setMaxResults(pageSize);
+
+            System.err.println(query.toString());
+
+            System.err.println(feeds);
+            feeds = query.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return feeds;
+    }
+
+    @Override
+    public ArrayList<RssFeed> getAllListed(int page, int pageSize) {
+        Session session = null;
+        ArrayList<RssFeed> feeds = new ArrayList<>();
+
+        try {
+            session = ServiceORM.getSessionFactory().openSession();
+            Query query = session.createQuery("from RssFeed");
+            query.setFirstResult(page);
+            query.setMaxResults(pageSize);
+
+            feeds = (ArrayList) query.list();
+//            Criteria criteria = session.createCriteria(RssFeed.class);
+//            criteria.setFirstResult(page);
+//            criteria.setMaxResults(pageSize);
+//            feeds = (ArrayList) criteria.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return feeds;
+    }
+
+
+    @Override
+    public Collection<RssItem> getNewsFromSource(URL source) {
+        Collection<RssItem> news = new ArrayList<>();
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        try {
+            HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
+            RequestConfig config = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .build();
+            HttpGet httpGet = new HttpGet(source.toURI());
+            httpGet.setConfig(config);
+
+            CloseableHttpResponse response = httpClient.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null) {
+                InputStream inputStream = entity.getContent();
+                try {
+                    DocumentBuilderFactory documentBuilderFactory =
+                            DocumentBuilderFactory.newInstance();
+                    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+
+                    Document document = documentBuilder.parse(inputStream);
+                    Element element = document.getDocumentElement();
+
+                    NodeList nodeList = element.getElementsByTagName("item");
+
+                    if (nodeList.getLength() > 0) {
+                        IntStream.range(0, nodeList.getLength()).forEach(index -> {
+                            Element entry = (Element) nodeList.item(index);
+
+                            Element titleElem = (Element) entry
+                                    .getElementsByTagName("title").item(0);
+
+                            Element descriptionElem = (Element) entry
+                                    .getElementsByTagName("description").item(0);
+
+                            Element pubDateElem = (Element) entry
+                                    .getElementsByTagName("pubDate").item(0);
+
+                            Element linkElem = (Element) entry
+                                    .getElementsByTagName("link").item(0);
+
+                            String title = titleElem.getFirstChild().getTextContent();
+                            String description = descriptionElem.getFirstChild().getTextContent();
+                            Date pubDate = new Date(pubDateElem.getFirstChild().getTextContent());
+
+                            URL link = null;
+                            try {
+                                link = new URL(linkElem.getFirstChild().getNodeValue());
+                            } catch (MalformedURLException e) {
+                                e.printStackTrace();
+                            }
+                            RssItem rssItem = new RssItem(title, description, pubDate, link);
+                            news.add(rssItem);
+                        });
+                    }
+                } finally {
+                    response.close();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return news;
     }
 
     @Override

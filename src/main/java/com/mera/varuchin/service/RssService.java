@@ -29,6 +29,7 @@ public class RssService {
         return Response.ok().build();
     }
 
+
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
@@ -53,10 +54,12 @@ public class RssService {
         return json.toString();
     }
 
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(RssItem rssItem) {
         System.out.println(rssItem);
+        System.out.println(dao.getByLink(rssItem.getLink()));
         if (dao.getByLink(rssItem.getLink()) == null) {
             System.out.println(rssItem.getPubDate());
             dao.add(rssItem);
