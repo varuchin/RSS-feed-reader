@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 
 @Entity
-@Table(name = "RSS")
+@Table(name = "RssItem")
 public class RssItem {
 
 
@@ -16,18 +16,9 @@ public class RssItem {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-//    @Column(name = "NAME", length = 35)
-//    private String name = null;
-
-//    @ManyToOne
-//    @JoinTable(name = "RSSfeed")
-//    @JoinColumn(name = "ID")
-//    @Column(name = "FEED_ID", nullable = false)
-//    private Long feed_id;
-
-//    @ManyToOne()
-//    @JoinColumn(name = "feed_id")
-//    private RssFeed rssFeed;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "feed_id", referencedColumnName = "id")
+    private RssFeed rssFeed;
 
     @Column(name = "TITLE", length = 1000, nullable = false)
     private String title = null;
@@ -42,8 +33,6 @@ public class RssItem {
     @Column(name = "LINK", length = 1000, nullable = false)
     private URL link = null;
 
-
-    private transient SourceRSS sourceRSS = new SourceRSS(this.title, this.link);
 
     private transient Collection<String> topWords = null;
 
@@ -65,15 +54,6 @@ public class RssItem {
 //        this.feed_id = feed_id;
 //    }
 
-    public RssItem(Long id, String title, String description, Date pubDate, URL link) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.pubDate = pubDate;
-        this.link = link;
-        this.sourceRSS = new SourceRSS(title, link);
-    }
-
     public Long getId() {
         return id;
     }
@@ -81,14 +61,15 @@ public class RssItem {
     public void setId(Long id) {
         this.id = id;
     }
-//
-//    public Long getFeed_id() {
-//        return feed_id;
-//    }
-//
-//    public void setFeed_id(Long feed_id) {
-//        this.feed_id = feed_id;
-//    }
+
+
+    public RssFeed getRssFeed() {
+        return rssFeed;
+    }
+
+    public void setRssFeed(RssFeed rssFeed) {
+        this.rssFeed = rssFeed;
+    }
 
     public String getTitle() {
         return title;
@@ -120,16 +101,6 @@ public class RssItem {
 
     public void setLink(URL link) {
         this.link = link;
-    }
-
-
-    public void setSourceRss(SourceRSS sourceRSS) {
-        this.sourceRSS = sourceRSS;
-    }
-
-
-    public SourceRSS getSourceRSS() {
-        return sourceRSS;
     }
 
 

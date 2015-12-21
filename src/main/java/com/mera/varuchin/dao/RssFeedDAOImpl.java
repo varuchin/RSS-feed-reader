@@ -18,12 +18,13 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.IntStream;
 
 
@@ -36,11 +37,10 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         try {
             session = ServiceORM.getSessionFactory().openSession();
             session.beginTransaction();
-            session.save(rssFeed);
 
-            System.err.println("HERE ");
             RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
-            rssItemDAO.add(rssFeed.getLink());
+            session.save(rssFeed);
+            rssItemDAO.add(rssFeed.getLink(), rssFeed);
             session.getTransaction().commit();
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,98 +48,8 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
             if (session != null && session.isOpen())
                 session.close();
         }
-    }
 
-//    @Override
-//    public void add(URL feedURL, String name) {
-//        ArrayList<RssFeed> rssFeeds = new ArrayList<>();
-//        CloseableHttpClient httpClient = HttpClients.createDefault();
-//        try {
-//            HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
-//            RequestConfig config = RequestConfig.custom()
-//                    .setProxy(proxy)
-//                    .build();
-//            HttpGet httpGet = new HttpGet(feedURL.toURI());
-//            httpGet.setConfig(config);
-//
-//            CloseableHttpResponse response = httpClient.execute(httpGet);
-//            System.out.println(response.getStatusLine());
-//            HttpEntity httpEntity = response.getEntity();
-//
-//            System.out.println(response.getStatusLine());
-//
-//            if (httpEntity != null) {
-//                InputStream inputStream = httpEntity.getContent();
-//                try {
-//                    //inputStream.read();
-//                    DocumentBuilderFactory documentBuilderFactory =
-//                            DocumentBuilderFactory.newInstance();
-//                    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-//
-//                    Document document = documentBuilder.parse(inputStream);
-//                    Element element = document.getDocumentElement();
-//                    System.out.println(element);
-//
-////                    Reader reader = new InputStreamReader(inputStream);
-////                    InputSource is = new InputSource(reader);
-////
-////                    Document document = documentBuilder.parse(is);
-////                    // document.getDocumentElement().normalize();
-////                    Element element = document.getDocumentElement();
-//
-//                    NodeList nodeList = element.getElementsByTagName("item");
-//                    System.out.println(nodeList.getLength());
-//
-//                    if (nodeList.getLength() > 0) {
-//
-//                        IntStream.range(0, nodeList.getLength()).forEach(index -> {
-//
-//                            System.out.println(nodeList.item(index));
-//                            Element entry = (Element) nodeList.item(index);
-//
-//
-//                            Element titleElem = (Element) entry
-//                                    .getElementsByTagName("title").item(0);
-//
-//                            Element descriptionElem = (Element) entry
-//                                    .getElementsByTagName("description").item(0);
-//
-//                            Element pubDateElem = (Element) entry
-//                                    .getElementsByTagName("pubDate").item(0);
-//
-//                            Element linkElem = (Element) entry
-//                                    .getElementsByTagName("link").item(0);
-//
-//                            String title = titleElem.getFirstChild().getTextContent();
-//                            System.out.println(title);
-//                            String description = descriptionElem.getFirstChild().getTextContent();
-//                            System.out.println(description);
-//                            Date pubDate = new Date(pubDateElem.getFirstChild().getTextContent());
-//
-//
-//                            URL link = null;
-//                            try {
-//                                link = new URL(linkElem.getFirstChild().getNodeValue());
-//                            } catch (MalformedURLException e) {
-//                                e.printStackTrace();
-//                            }
-//                            RssItem rssItem = new RssItem(title, description, pubDate, link);
-//                            RssFeed rssFeed = new RssFeed(rssItem, name);
-//                            rssFeeds.add(rssFeed);
-//                        });
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                } finally {
-//                    response.close();
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        rssFeeds.stream().forEach(feed
-//                -> add(feed));
-//    }
+    }
 
     @Override
     public void update(RssFeed rssFeed) {
@@ -188,9 +98,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
             System.err.println("Not found such RSS feed.");
             return;
         }
-
         Session session = null;
-
         try {
             String hqlUpdate = "UPDATE RssFeed SET NAME = :newName" +
                     " WHERE NAME = :oldName";
@@ -230,7 +138,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
             RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
             rssItemDAO.remove(rssFeed.getLink());
 
-            rssItemDAO.add(url);
+            rssItemDAO.add(url, rssFeed);
             session.getTransaction().commit();
         } catch (Exception e) {
             e.printStackTrace();
@@ -300,6 +208,61 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
     }
 
     @Override
+    public void registerInBulk(File inputFile) {
+        try {
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
+                    .newInstance();
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            Document document = documentBuilder.parse(inputFile);
+            document.getDocumentElement().normalize();
+            NodeList nodeList = document.getElementsByTagName("source");
+
+            if (nodeList.getLength() > 0) {
+                IntStream.range(0, nodeList.getLength()).forEach(index -> {
+
+                    Element entry = (Element) nodeList.item(index);
+                    Element nameElem = (Element) entry.getElementsByTagName("name").item(0);
+                    Element linkElem = (Element) entry.getElementsByTagName("link").item(0);
+
+                    String name = nameElem.getFirstChild().getTextContent();
+                    String link = linkElem.getFirstChild().getTextContent();
+
+                    RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();
+                    RssFeed rssFeed = null;
+                    try {
+                        rssFeed = new RssFeed(name, new URL(link));
+                    } catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
+                    rssFeedDAO.add(rssFeed);
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void refresh(RssFeed rssFeed) {
+        Session session = null;
+
+        try {
+            session = ServiceORM.getSessionFactory().openSession();
+            session.delete(rssFeed);
+            session.getTransaction().commit();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+
+        RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();
+        rssFeedDAO.add(rssFeed);
+    }
+
+    @Override
     public RssFeed getById(Long id) {
         RssFeed result = null;
         Session session = null;
@@ -336,50 +299,27 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
     }
 
     @Override
-    public RssItem getBySource(String title, URL link) {
-        Collection<RssFeed> feeds = new RssFeedDAOImpl().getAllRegisteredFeeds();
-        RssItem rssItem = null;
+    public RssItem getBySource(Long feed_id, Long item_id) {
+        RssFeed rssFeed = new RssFeedDAOImpl().getById(feed_id);
+        System.out.println(rssFeed);
 
-        boolean hasLink = feeds.stream().anyMatch(feed -> {
-            if (feed.getLink() == link)
-                return true;
-            return false;
-        });
-        if (hasLink) {
-            rssItem = new RssItemDAOImpl().getBySource(title, link);
+
+        if (rssFeed == null) {
+            System.err.println("No feed with such ID.");
+            return null;
         }
+        RssItem rssItem = new RssItemDAOImpl().getById(item_id);
+        if (rssItem == null) {
+            System.err.println("No item with such ID.");
+            return null;
+        }
+        System.out.println(rssItem);
         return rssItem;
     }
 
     @Override
-    public Collection<RssFeed> getRssSortedByName(String name) {
-        Collection<RssFeed> feeds = new ArrayList<>();
-        Session session = null;
-        try {
-
-            String param = "%" + name + "%";
-            session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("FROM RssFeed WHERE lower(NAME) LIKE lower" +
-                    "(:NAME) ORDER BY NAME ASC");
-
-            System.err.println(param);
-            query.setParameter("NAME", param);
-            System.err.println(query.toString());
-
-            System.err.println(feeds);
-            feeds = query.list();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-        return feeds;
-    }
-
-    @Override
-    public Collection<RssFeed> getFeedsByName(int page, int pageSize, String name) {
-        Collection<RssFeed> feeds = new ArrayList<>();
+    public List<RssFeed> getFeedsByName(int page, int pageSize, String name) {
+        List<RssFeed> feeds = new ArrayList<>();
         Session session = null;
 
         try {
@@ -405,42 +345,18 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         return feeds;
     }
 
-    @Override
-    public ArrayList<RssFeed> getAllListed(int page, int pageSize) {
-        Session session = null;
-        ArrayList<RssFeed> feeds = new ArrayList<>();
-
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("from RssFeed");
-            query.setFirstResult(page);
-            query.setMaxResults(pageSize);
-
-            feeds = (ArrayList) query.list();
-//            Criteria criteria = session.createCriteria(RssFeed.class);
-//            criteria.setFirstResult(page);
-//            criteria.setMaxResults(pageSize);
-//            feeds = (ArrayList) criteria.list();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-        return feeds;
-    }
-
 
     @Override
-    public Collection<RssItem> getNewsFromSource(URL source) {
-        Collection<RssItem> news = new ArrayList<>();
+    public List<RssItem> getNewsFromSource(URL source) {
+        List<RssItem> news = new ArrayList<>();
         CloseableHttpClient httpClient = HttpClients.createDefault();
-
         try {
             HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
             RequestConfig config = RequestConfig.custom()
                     .setProxy(proxy)
                     .build();
+
+            System.out.println(source.toURI().toString());
             HttpGet httpGet = new HttpGet(source.toURI());
             httpGet.setConfig(config);
 
@@ -476,7 +392,9 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
                                     .getElementsByTagName("link").item(0);
 
                             String title = titleElem.getFirstChild().getTextContent();
-                            String description = descriptionElem.getFirstChild().getTextContent();
+                            String description = descriptionElem.getFirstChild()
+                                    .getTextContent();
+                            //переделать в number (instant)или прост Long (из instant->Long)
                             Date pubDate = new Date(pubDateElem.getFirstChild().getTextContent());
 
                             URL link = null;
@@ -500,9 +418,9 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
     }
 
     @Override
-    public Collection<RssFeed> getAllRegisteredFeeds() {
+    public List<RssFeed> getAllRegisteredFeeds() {
         Session session = null;
-        Collection<RssFeed> rssFeeds = new ArrayList<>();
+        List<RssFeed> rssFeeds = new ArrayList<>();
 
         try {
             session = ServiceORM.getSessionFactory().openSession();
@@ -516,41 +434,4 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         }
         return rssFeeds;
     }
-
-    //поулчить все айтемы с фида
-    @Override
-    public Collection<RssItem> getAllItems(Long id) {
-        Collection<RssItem> items = null;
-
-        RssFeed rssFeed = new RssFeedDAOImpl().getById(id);
-        if (rssFeed.equals(null)) {
-            System.err.println("No feed with such ID");
-            return null;
-        }
-
-        items = new RssItemDAOImpl().getItemsWithLink(rssFeed.getLink());
-        System.out.println(items);
-        return items;
-    }
-
-
-//    @Override
-//    public RssItemRssItem> getItem(Long item_id){
-//        Session session = null;
-//        Collection<RssItem>  items = new ArrayList<>();
-//
-//        try{
-//            session = ServiceORM.getSessionFactory().openSession();
-//            String hqlQuery = "FROM RssFeed WHERE ITEM_ID = :link";
-//            Query query = session.createQuery(hqlQuery).setParameter("link", item_id.toString());
-//            if(query.uniqueResult().equals(null)) {
-//                System.err.println("No item with such ID.");
-//                return null;
-//            }
-//            else{
-//                RssItem rssItem = (RssItem) query.uniqueResult();
-//            }
-//        }
-//        return items;
-//    }
 }

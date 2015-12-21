@@ -1,6 +1,7 @@
 package com.mera.varuchin.dao;
 
 import com.mera.varuchin.ServiceORM;
+import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -45,8 +46,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public void add(URL link) {
-        ArrayList<RssItem> rssItems = new ArrayList<>();
+    public void add(URL link, RssFeed rssFeed) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         try {
             HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
@@ -62,7 +62,6 @@ public class RssItemDAOImpl implements RssItemDAO {
             if (httpEntity != null) {
                 InputStream inputStream = httpEntity.getContent();
                 try {
-                    //inputStream.read();
                     DocumentBuilderFactory documentBuilderFactory =
                             DocumentBuilderFactory.newInstance();
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -70,12 +69,6 @@ public class RssItemDAOImpl implements RssItemDAO {
                     Document document = documentBuilder.parse(inputStream);
                     Element element = document.getDocumentElement();
 
-//                    Reader reader = new InputStreamReader(inputStream);
-//                    InputSource is = new InputSource(reader);
-//
-//                    Document document = documentBuilder.parse(is);
-//                    // document.getDocumentElement().normalize();
-//                    Element element = document.getDocumentElement();
                     NodeList nodeList = element.getElementsByTagName("item");
 
                     if (nodeList.getLength() > 0) {
@@ -108,7 +101,8 @@ public class RssItemDAOImpl implements RssItemDAO {
                                 e.printStackTrace();
                             }
                             RssItem rssItem = new RssItem(title, description, pubDate, url);
-                            rssItems.add(rssItem);
+                            rssItem.setRssFeed(rssFeed);
+                            rssFeed.addItem(rssItem);
                         });
                     }
                 } catch (IOException e) {
@@ -120,7 +114,6 @@ public class RssItemDAOImpl implements RssItemDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        rssItems.stream().forEach(item -> add(item));
     }
 
     //не верный подход
@@ -153,28 +146,8 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public Collection<RssItem> getItemsWithLink(URL link) {
-        Collection<RssItem> items = new ArrayList<>();
-
-        Session session = null;
-
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("FROM RssItem WHERE LINK = :link");
-
-            items = query.setParameter("link", link.toString()).list();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-        return items;
-    }
-
-    @Override
-    public Collection<RssItem> getAllItems() {
-        Collection<RssItem> items = new ArrayList<>();
+    public List<RssItem> getAllItems() {
+        List<RssItem> items = new ArrayList<>();
         //Collection<String> result = new ArrayList<>();
         Session session = null;
         try {
@@ -193,19 +166,26 @@ public class RssItemDAOImpl implements RssItemDAO {
         return items;
     }
 
-//    @Override
-//    public SourceRSS getByRssSource(RssItem rssItem) {
-//        RssItem origin = new RssItemDAOImpl().getById(rssItem.getId());
-//
-//        if (origin == null) {
-//            System.err.println("No such RSS Item.");
-//            return null;
-//        } else
-//            return rssItem.getSourceRSS();
-//    }
+    @Override
+    public RssItem getById(Long id) {
+        Session session = null;
+
+        try {
+            session = ServiceORM.getSessionFactory().openSession();
+            String hqlQuery = "from RssItem WHERE ID = :id";
+            Query query = session.createQuery(hqlQuery).setParameter("id", id);
+            return (RssItem) query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (session != null && session.isOpen())
+                session.close();
+        }
+        return null;
+    }
 
     @Override
-    public Collection<RssItem> getByLink(URL link) {
+    public List<RssItem> getByLink(URL link) {
         Session session = null;
 
         try {
@@ -221,29 +201,15 @@ public class RssItemDAOImpl implements RssItemDAO {
         }
         return null;
     }
-
-    @Override
-    public RssItem getByTitle(String title) {
-        Session session = null;
-
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
-            String hqlQuery = "FROM RssItem WHERE TITLE = :title";
-            Query query = session.createQuery(hqlQuery).setParameter("title", title);
-            return (RssItem) query.uniqueResult();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (session != null && session.isOpen())
-                session.close();
-        }
-        return null;
-    }
     //    cделать отображение только 5-ти слов
 
     @Override
-    public Map<String, Integer> getTopWords(RssItem rssItem) {
-
+    public Map<String, Integer> getTopWords(Long item_id) {
+        RssItem rssItem = new RssItemDAOImpl().getById(item_id);
+        if(rssItem == null){
+            System.err.println("No item with such ID.");
+            return null;
+        }
         Map<String, Integer> frequency = new HashMap<>();
         StringBuilder builder = new StringBuilder();
         builder.append(rssItem.getTitle() + " ");
@@ -263,7 +229,6 @@ public class RssItemDAOImpl implements RssItemDAO {
 
         SortedMap<String, Integer> result = new TreeMap<>();
         result.putAll(frequency);
-
         return result;
     }
 
@@ -278,16 +243,5 @@ public class RssItemDAOImpl implements RssItemDAO {
         });
         System.out.println(result);
         return result;
-    }
-
-    @Override
-    public RssItem getBySource(String title, URL link) {
-        Map<String, URL> sources = getAllSourcesRss();
-
-        if (sources.containsKey(title) && sources.containsValue(link)) {
-            RssItem item = new RssItemDAOImpl().getByTitle(title);
-            return item;
-        }
-        return null;
     }
 }

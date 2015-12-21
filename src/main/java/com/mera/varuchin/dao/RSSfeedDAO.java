@@ -4,15 +4,13 @@ package com.mera.varuchin.dao;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 
+import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public interface RSSfeedDAO {
 
     void add(RssFeed rssFeed);
-
-   // void add(URL feedURL, String name);
 
     void update(RssFeed rssfeed);
 
@@ -24,25 +22,19 @@ public interface RSSfeedDAO {
 
     void remove(Long id);
 
+    void registerInBulk(File inputFile);
+
+    void refresh(RssFeed rssFeed);
+
     RssFeed getById(Long id);
 
     RssFeed getByLink(URL link);
 
-    RssItem getBySource(String title, URL link);
+    RssItem getBySource(Long feed_id, Long item_id);
 
-    ArrayList<RssFeed> getAllListed(int start, int limit);
+    List<RssFeed> getFeedsByName(int page, int pageSize, String name);
 
-    Collection<RssFeed> getRssSortedByName(String name);
+    List<RssItem> getNewsFromSource(URL source);
 
-    Collection<RssFeed> getFeedsByName(int page, int pageSize, String name);
-
-    Collection<RssItem> getNewsFromSource(URL source);
-
-    Collection<RssFeed> getAllRegisteredFeeds();
-
-    Collection<RssItem> getAllItems(Long id);
-
-
-
-
+    List<RssFeed> getAllRegisteredFeeds();
 }

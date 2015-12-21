@@ -5,29 +5,35 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
+import javax.inject.Singleton;
 
+@Singleton
 public class ServiceORM {
-    private static SessionFactory sessionFactory = setUp();
-
+    private static volatile SessionFactory sessionFactory = setUp();
 
     protected static SessionFactory setUp() {
 
         final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .configure().build();
-        System.err.println("REGISTRY");
-        System.out.println(registry);
+
         try {
             return new MetadataSources(registry).buildMetadata().buildSessionFactory();
         } catch (Exception e) {
+            e.printStackTrace();
             StandardServiceRegistryBuilder.destroy(registry);
         }
-        System.err.println("|NULL");
         return null;
     }
 
-    public static SessionFactory getSessionFactory() {
-        if (sessionFactory == null) {
-            setUp();
+    public static synchronized SessionFactory getSessionFactory() {
+        SessionFactory localSessionFactory = sessionFactory;
+        if (localSessionFactory == null) {
+            synchronized (SessionFactory.class) {
+                localSessionFactory = sessionFactory;
+                if (localSessionFactory == null) {
+                    sessionFactory = localSessionFactory = setUp();
+                }
+            }
         }
         return sessionFactory;
     }

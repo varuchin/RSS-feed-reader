@@ -11,15 +11,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
+import java.util.List;
 
 @Path("/rss/items")
-@Produces(MediaType.APPLICATION_XML)
-public class RssService {
+@Produces(MediaType.APPLICATION_JSON)
+public class ItemService {
 
     private RssItemDAO dao;
 
-    public RssService() {
+    public ItemService() {
         dao = new RssItemDAOImpl();
     }
 
@@ -33,17 +33,9 @@ public class RssService {
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<RssItem> getAll() {
+    public List<RssItem> getAll() {
         System.err.println("All");
         return dao.getAllItems();
-    }
-
-    @GET
-    @Path("/sources")
-    @Produces(MediaType.APPLICATION_JSON)
-    public RssItem getBySource(@QueryParam("title") String title,
-                               @QueryParam("link") URL link) {
-        return dao.getBySource(title, link);
     }
 
     @GET
@@ -54,12 +46,17 @@ public class RssService {
         return json.toString();
     }
 
+    @GET
+    @Path("/words")
+    public String getTopWords(@QueryParam("item_id") Long item_id){
+        JSONObject jsonObject = new JSONObject(dao.getTopWords(item_id));
+        return jsonObject.toString();
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(RssItem rssItem) {
-        System.out.println(rssItem);
-        System.out.println(dao.getByLink(rssItem.getLink()));
+
         if (dao.getByLink(rssItem.getLink()) == null) {
             System.out.println(rssItem.getPubDate());
             dao.add(rssItem);
@@ -69,17 +66,4 @@ public class RssService {
         } else
             return Response.status(Response.Status.BAD_REQUEST).build();
     }
-
-
-//pagination в оракле погуглить
-
-    //передавать старт и лимит в ресурсе
-//   не работает
-//    @GET
-//    @Path("/list")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Pageable<RssItem> getPaginatedList(){
-//        return dao.getPaginatedList();
-//    }
-
 }
