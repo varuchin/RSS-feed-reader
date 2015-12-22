@@ -35,8 +35,8 @@ public class FeedService {
     @GET
     @Path("/feeds/list")
     public List<RssFeed> getByName(@QueryParam("page") int page,
-                                         @QueryParam("pageSize") int pageSize,
-                                         @QueryParam("name") String name) {
+                                   @QueryParam("pageSize") int pageSize,
+                                   @QueryParam("name") String name) {
 
         return dao.getFeedsByName(page, pageSize, name);
     }
@@ -94,7 +94,6 @@ public class FeedService {
     @GET
     @Path("/feeds/registered")
     public List<RssFeed> getAll() {
-        System.err.println("All");
         return dao.getAllRegisteredFeeds();
     }
 
@@ -102,7 +101,7 @@ public class FeedService {
     @GET
     @Path("/feeds/{feed_id}/items/{item_id}")
     public String getBySource(@PathParam("feed_id") Long feed_id,
-                               @PathParam("item_id") Long item_id) {
+                              @PathParam("item_id") Long item_id) {
         JSONObject jsonObject = new JSONObject(dao.getBySource(feed_id, item_id));
         System.err.println(dao.getBySource(feed_id, item_id));
         return jsonObject.toString();

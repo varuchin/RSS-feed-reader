@@ -12,10 +12,6 @@ import java.util.Set;
 @Table(name = "RssFeed")
 public class RssFeed {
 
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.ALL)
-    private Set<RssItem> items = new HashSet<>();
-
     @Id
     @GeneratedValue
     @Column(name = "id", nullable = false)
@@ -27,6 +23,10 @@ public class RssFeed {
     @Column
     private URL link;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.ALL)
+    @Transient
+    private Set<RssItem> items = new HashSet<>();
+
     public static final transient LocalTime creationTime =
             LocalTime.now(ZoneId.of("Europe/Berlin"));
 
@@ -37,6 +37,7 @@ public class RssFeed {
         this.name = name.toUpperCase();
         this.link = link;
     }
+
 
     public Set<RssItem> getItems() {
         return items;
@@ -66,9 +67,10 @@ public class RssFeed {
         return link;
     }
 
-    public  void addItem(RssItem rssItem){
+    public void addItem(RssItem rssItem) {
         this.items.add(rssItem);
     }
+
     public void setLink(URL link) {
         this.link = link;
     }

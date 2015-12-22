@@ -11,7 +11,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-public class Checker implements Runnable {
+public final class Checker implements Runnable {
 
     @Override
     public void run() {
@@ -25,7 +25,6 @@ public class Checker implements Runnable {
             if (feedInstances != null) {
                 feedInstances.stream().forEach(instance -> {
                     LocalTime currentTime = LocalTime.now(ZoneId.of("Europe/Berlin"));
-
                     long timeDifference = ChronoUnit.MINUTES
                             .between(instance.getCreationTime(), currentTime);
 

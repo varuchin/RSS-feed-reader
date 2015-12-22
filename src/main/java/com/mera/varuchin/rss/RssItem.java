@@ -1,10 +1,12 @@
 package com.mera.varuchin.rss;
 
 
+import com.mera.varuchin.dao.RssItemDAOImpl;
+
 import javax.persistence.*;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 @Entity
 @Table(name = "RssItem")
@@ -34,7 +36,7 @@ public class RssItem {
     private URL link = null;
 
 
-    private transient Collection<String> topWords = null;
+//    private transient Map<String, Integer> topWords = getTopWords();
 
     public RssItem() {
     }
@@ -46,14 +48,6 @@ public class RssItem {
         this.link = link;
     }
 
-//    public RssItem(String title, String description, Date pubDate, URL link, Long feed_id) {
-//        this.title = title;
-//        this.description = description;
-//        this.pubDate = pubDate;
-//        this.link = link;
-//        this.feed_id = feed_id;
-//    }
-
     public Long getId() {
         return id;
     }
@@ -63,9 +57,9 @@ public class RssItem {
     }
 
 
-    public RssFeed getRssFeed() {
-        return rssFeed;
-    }
+//   // public RssFeed getRssFeed() {
+//        return rssFeed;
+//    }
 
     public void setRssFeed(RssFeed rssFeed) {
         this.rssFeed = rssFeed;
@@ -101,6 +95,11 @@ public class RssItem {
 
     public void setLink(URL link) {
         this.link = link;
+    }
+
+    public Map<String, Integer> getTopWords() {
+        RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
+        return rssItemDAO.getTopWords(this.id);
     }
 
 

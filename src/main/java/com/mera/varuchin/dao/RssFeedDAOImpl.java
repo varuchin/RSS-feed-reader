@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.w3c.dom.Document;
@@ -424,8 +425,10 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
 
         try {
             session = ServiceORM.getSessionFactory().openSession();
-            Query query = session.createQuery("from RssFeed");
-            rssFeeds = query.list();
+            Criteria criteria = session.createCriteria(RssFeed.class);
+
+            rssFeeds = (ArrayList<RssFeed>) criteria.list();
+            System.out.println(rssFeeds);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

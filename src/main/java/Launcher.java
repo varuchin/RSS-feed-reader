@@ -24,7 +24,8 @@ public class Launcher {
     public static void main(String[] args) throws IOException, SQLException {
         Locale.setDefault(Locale.ENGLISH);
         final HttpServer server = startServer();
-        ScheduledExecutorService scheduledExecutorService =
+
+        final ScheduledExecutorService scheduledExecutorService =
                 Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleWithFixedDelay
                 (new Checker(), 0, 10, TimeUnit.SECONDS);
