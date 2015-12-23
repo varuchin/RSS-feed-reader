@@ -23,12 +23,11 @@ public class RssFeed {
     @Column
     private URL link;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.ALL)
-    @Transient
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.REMOVE)
     private Set<RssItem> items = new HashSet<>();
 
     public static final transient LocalTime creationTime =
-            LocalTime.now(ZoneId.of("Europe/Berlin"));
+            LocalTime.now(ZoneId.of("Europe/Moscow"));
 
     public RssFeed() {
     }
@@ -75,7 +74,7 @@ public class RssFeed {
         this.link = link;
     }
 
-    public static LocalTime getCreationTime() {
+    public LocalTime getCreationTime() {
         return creationTime;
     }
 

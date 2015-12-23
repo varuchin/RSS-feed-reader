@@ -22,13 +22,19 @@ public final class Checker implements Runnable {
             Criteria criteria = session.createCriteria(RssFeed.class);
             List<RssFeed> feedInstances = criteria.list();
 
+            System.out.println(feedInstances);
             if (feedInstances != null) {
                 feedInstances.stream().forEach(instance -> {
-                    LocalTime currentTime = LocalTime.now(ZoneId.of("Europe/Berlin"));
+                    //ставить ZonedDateTime
+                    LocalTime currentTime = LocalTime.now(ZoneId.of("Europe/Moscow"));
+                    //смапить в базу modification time
+                    //выставлять при сохранении
                     long timeDifference = ChronoUnit.MINUTES
                             .between(instance.getCreationTime(), currentTime);
 
-                    if (timeDifference >= 10) {
+                    //стер старые items и загрузил новые
+                    //а не пересохранял
+                    if (timeDifference >= 1) {
                         RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();
                         rssFeedDAO.refresh(instance);
                     }

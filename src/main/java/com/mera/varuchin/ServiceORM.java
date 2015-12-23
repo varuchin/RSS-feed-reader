@@ -1,5 +1,6 @@
 package com.mera.varuchin;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -36,5 +37,9 @@ public class ServiceORM {
             }
         }
         return sessionFactory;
+    }
+
+    public static Session openSession() {
+        return getSessionFactory().openSession();
     }
 }

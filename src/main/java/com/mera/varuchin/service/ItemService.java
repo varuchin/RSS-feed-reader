@@ -6,11 +6,11 @@ import com.mera.varuchin.dao.RssItemDAOImpl;
 import com.mera.varuchin.rss.RssItem;
 import org.json.JSONObject;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URL;
 import java.util.List;
 
 @Path("/rss/items")
@@ -23,13 +23,7 @@ public class ItemService {
         dao = new RssItemDAOImpl();
     }
 
-    @DELETE
-    public Response delete(@PathParam("url") URL url) {
-        dao.remove(url);
-        return Response.ok().build();
-    }
-
-
+//переменовать и добавить пагинацию
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
@@ -38,32 +32,11 @@ public class ItemService {
         return dao.getAllItems();
     }
 
-    @GET
-    @Path("/sources/all")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getAllSources() {
-        JSONObject json = new JSONObject(dao.getAllSourcesRss());
-        return json.toString();
-    }
 
     @GET
-    @Path("/words")
-    public String getTopWords(@QueryParam("item_id") Long item_id){
+    @Path("/{id}/words")
+    public String getTopWords(@PathParam("item_id") Long item_id){
         JSONObject jsonObject = new JSONObject(dao.getTopWords(item_id));
         return jsonObject.toString();
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response add(RssItem rssItem) {
-
-        if (dao.getByLink(rssItem.getLink()) == null) {
-            System.out.println(rssItem.getPubDate());
-            dao.add(rssItem);
-            URI location = URI.create("/rss" + rssItem.getId());
-            return Response.created(location).build();
-
-        } else
-            return Response.status(Response.Status.BAD_REQUEST).build();
     }
 }

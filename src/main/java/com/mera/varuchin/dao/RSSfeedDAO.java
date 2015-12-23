@@ -4,7 +4,7 @@ package com.mera.varuchin.dao;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 
-import java.io.File;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.List;
 
@@ -14,15 +14,9 @@ public interface RSSfeedDAO {
 
     void update(RssFeed rssfeed);
 
-    void update(RssFeed rssFeed, String name);
-
-    void update(RssFeed rssFeed, URL link);
-
-    void update(RssFeed rssFeed, String name, URL link);
-
     void remove(Long id);
 
-    void registerInBulk(File inputFile);
+    void parseSources(ObjectInputStream inputStream);
 
     void refresh(RssFeed rssFeed);
 

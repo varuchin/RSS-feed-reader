@@ -18,7 +18,7 @@ public class RssItem {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "feed_id", referencedColumnName = "id")
     private RssFeed rssFeed;
 
@@ -57,9 +57,9 @@ public class RssItem {
     }
 
 
-//   // public RssFeed getRssFeed() {
-//        return rssFeed;
-//    }
+    public RssFeed getRssFeed() {
+        return rssFeed;
+    }
 
     public void setRssFeed(RssFeed rssFeed) {
         this.rssFeed = rssFeed;

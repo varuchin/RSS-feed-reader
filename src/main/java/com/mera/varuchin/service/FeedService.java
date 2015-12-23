@@ -24,6 +24,21 @@ public class FeedService {
         dao = new RssFeedDAOImpl();
     }
 
+// написать единый get с wrapper'ом
+//    @GET
+//    @Path("/feeds/{page}/{pageSize}")
+//    public List<RssFeed> getFeeds(@PathParam("page") int page,
+//                                  @PathParam("pageSize") int papeSize,
+//                                  @QueryParam("name") String name) {
+//
+//        if(name == null){
+//
+//        }
+//
+//
+//    }
+
+
     //+
     @GET
     @Path("/links")
@@ -31,6 +46,7 @@ public class FeedService {
         return dao.getNewsFromSource(url);
     }
 
+    //просто feeds
     //+
     @GET
     @Path("/feeds/list")
@@ -56,13 +72,13 @@ public class FeedService {
         }
     }
 
-    //+
+    //использовать один референс дао
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response update(@QueryParam("id") Long id, RssFeed rssFeed) {
+    @Path("/feeds/{id}")
+    public Response update(@PathParam("id") Long id, RssFeed rssFeed) {
         RssFeed originRssFeed = new RssFeedDAOImpl().getById(id);
 
-        System.err.println(rssFeed.getLink());
         if (dao.getById(id) == null) {
             System.err.println("Nothing to update: no such element by this ID.");
             return Response.status(Response.Status.BAD_REQUEST).build();
@@ -79,7 +95,7 @@ public class FeedService {
 
     //+
     @DELETE
-    @Path("{id}")
+    @Path("/feeds/{id}")
     public Response remove(@PathParam("id") Long id) {
         RssFeed originRssFeed = dao.getById(id);
         if (originRssFeed == null) {
@@ -106,4 +122,12 @@ public class FeedService {
         System.err.println(dao.getBySource(feed_id, item_id));
         return jsonObject.toString();
     }
+
+//    @POST
+//    @Path("feeds/upload")
+//    @Produces("text/xml")
+//    public Response addFeed(@Multipart(value = "sources", type = "text/xml") ObjectInputStream inputStream) {
+//        dao.parseSources(inputStream);
+//        return Response.status(Response.Status.CREATED).build();
+//    }
 }

@@ -16,9 +16,13 @@ public interface RssItemDAO {
 
     void remove(URL link);
 
+    void remove(RssItem rssItem);
+
     List<RssItem> getByLink(URL link);
 
     List<RssItem> getAllItems();
+
+    List<RssItem> getAllItemsWithId(Long feed_id);
 
     Map<String, Integer> getTopWords(Long item_id);
 

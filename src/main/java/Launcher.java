@@ -1,4 +1,5 @@
 import com.mera.varuchin.Checker;
+import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -7,8 +8,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Locale;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
@@ -25,10 +24,8 @@ public class Launcher {
         Locale.setDefault(Locale.ENGLISH);
         final HttpServer server = startServer();
 
-        final ScheduledExecutorService scheduledExecutorService =
-                Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleWithFixedDelay
-                (new Checker(), 0, 10, TimeUnit.SECONDS);
+        RssExecutor rssExecutor = new RssExecutor();
+        rssExecutor.run(new Checker(), 0, 10, TimeUnit.SECONDS);
 
         System.in.read();
         server.stop();
