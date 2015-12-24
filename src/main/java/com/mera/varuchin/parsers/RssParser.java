@@ -12,7 +12,6 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ import java.util.stream.IntStream;
 
 public class RssParser {
 
-    public void parseSources(ObjectInputStream inputStream) {
+    public void parseSources(InputStream inputStream) {
         RssExecutor rssExecutor = new RssExecutor();
         Runnable task = () -> {
             try {
@@ -94,7 +93,8 @@ public class RssParser {
 
                     String title = titleElem.getFirstChild().getTextContent();
                     String description = descriptionElem.getFirstChild().getTextContent();
-                    Date pubDate = new Date(pubDateElem.getFirstChild().getTextContent());
+                    String pubDate = new Date(pubDateElem.getFirstChild()
+                            .getTextContent()).toString();
 
                     URL url = null;
                     try {

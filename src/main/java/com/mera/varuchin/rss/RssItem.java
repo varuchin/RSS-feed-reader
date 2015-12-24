@@ -5,7 +5,6 @@ import com.mera.varuchin.dao.RssItemDAOImpl;
 
 import javax.persistence.*;
 import java.net.URL;
-import java.util.Date;
 import java.util.Map;
 
 @Entity
@@ -18,7 +17,7 @@ public class RssItem {
     @Column(name = "ID", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "feed_id", referencedColumnName = "id")
     private RssFeed rssFeed;
 
@@ -29,8 +28,7 @@ public class RssItem {
     private String description = null;
 
     @Column(name = "PUB_DATE")
-    @Temporal(value = TemporalType.DATE)
-    private Date pubDate = null;
+    private String pubDate = null;
 
     @Column(name = "LINK", length = 1000, nullable = false)
     private URL link = null;
@@ -41,7 +39,7 @@ public class RssItem {
     public RssItem() {
     }
 
-    public RssItem(String title, String description, Date pubDate, URL link) {
+    public RssItem(String title, String description, String pubDate, URL link) {
         this.title = title;
         this.description = description;
         this.pubDate = pubDate;
@@ -73,11 +71,11 @@ public class RssItem {
         this.title = title;
     }
 
-    public Date getPubDate() {
+    public String getPubDate() {
         return pubDate;
     }
 
-    public void setPubDate(Date pubDate) {
+    public void setPubDate(String pubDate) {
         this.pubDate = pubDate;
     }
 

@@ -3,8 +3,7 @@ package com.mera.varuchin.rss;
 
 import javax.persistence.*;
 import java.net.URL;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,11 +22,11 @@ public class RssFeed {
     @Column
     private URL link;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "rssFeed", cascade = CascadeType.REMOVE)
     private Set<RssItem> items = new HashSet<>();
 
-    public static final transient LocalTime creationTime =
-            LocalTime.now(ZoneId.of("Europe/Moscow"));
+    @Column
+    private ZonedDateTime modificationTime = ZonedDateTime.now();
 
     public RssFeed() {
     }
@@ -74,8 +73,11 @@ public class RssFeed {
         this.link = link;
     }
 
-    public LocalTime getCreationTime() {
-        return creationTime;
+    public ZonedDateTime getModificationTime() {
+        return modificationTime;
     }
 
+    public void setModificationTime(ZonedDateTime modificationTime) {
+        this.modificationTime = modificationTime;
+    }
 }

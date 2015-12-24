@@ -9,7 +9,8 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import javax.inject.Singleton;
 
 @Singleton
-public class ServiceORM {
+//sessionProvider
+public class SessionProvider {
     private static volatile SessionFactory sessionFactory = setUp();
 
     protected static SessionFactory setUp() {

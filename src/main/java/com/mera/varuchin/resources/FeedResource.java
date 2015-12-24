@@ -5,9 +5,10 @@ import com.mera.varuchin.dao.RSSfeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.dao.RssItemDAOImpl;
+import com.mera.varuchin.info.FeedInfo;
+import com.mera.varuchin.info.ItemInfo;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
-import com.mera.varuchin.wrap.Wrapper;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,44 +21,43 @@ import java.util.List;
 public class FeedResource {
 
     private RSSfeedDAO dao;
-    private RssItemDAO itemDAO = new RssItemDAOImpl();
 
+    private RssItemDAO itemDAO = new RssItemDAOImpl();
 
     public FeedResource() {
         dao = new RssFeedDAOImpl();
     }
 
-
     @GET
-    @Path("/items/{page}/{pageSize}")
-    public List<Wrapper> getItems(@PathParam("page") Integer page,
-                                  @PathParam("pageSize") Integer pageSize) {
+    @Path("/items")
+    public List<ItemInfo> getItems(@QueryParam("page") Integer page,
+                                   @QueryParam("pageSize") Integer pageSize) {
         List<RssItem> items = itemDAO.getItems(page, pageSize);
-        Wrapper wrapper = new Wrapper();
-        List<Wrapper> wrappers = wrapper.wrapItemList(items);
+        ItemInfo information = new ItemInfo();
+        List<ItemInfo> result = information.setItemListInfo(items);
 
-        return wrappers;
+        return result;
     }
 
     @GET
-    @Path("/feeds/{page}/{pageSize}")
-    public List<Wrapper> getFeeds(@PathParam("page") Integer page,
-                                  @PathParam("pageSize") Integer papeSize,
-                                  @QueryParam("name") String name) {
+    @Path("/feeds")
+    public List<FeedInfo> getFeeds(@QueryParam("page") Integer page,
+                                   @QueryParam("pageSize") Integer papeSize,
+                                   @QueryParam("name") String name) {
         List<RssFeed> feeds = dao.getFeeds(page, papeSize, name);
-        Wrapper wrapper = new Wrapper();
-        List<Wrapper> wrappers = wrapper.wrapFeedList(feeds);
+        FeedInfo feedInfo = new FeedInfo();
+        List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
 
-        return wrappers;
+        return information;
     }
 
     @GET
     @Path("items/{id}/words")
-    public List<Wrapper> getTopWords(@PathParam("id") Long id) {
-        Wrapper wrapper = new Wrapper();
-        List<Wrapper> wrappers = wrapper.topWords(itemDAO.getTopWords(id));
+    public List<ItemInfo> getTopWords(@PathParam("id") Long id) {
+        ItemInfo itemInfo = new ItemInfo();
+        List<ItemInfo> information = itemInfo.topWords(itemDAO.getTopWords(id));
 
-        return wrappers;
+        return information;
     }
 
 //    @GET
@@ -120,12 +120,12 @@ public class FeedResource {
     //+
     @GET
     @Path("/feeds/{feed_id}/items/{item_id}")
-    public Wrapper getBySource(@PathParam("feed_id") Long feed_id,
-                               @PathParam("item_id") Long item_id) {
+    public ItemInfo getBySource(@PathParam("feed_id") Long feed_id,
+                                @PathParam("item_id") Long item_id) {
         RssItem item = dao.getBySource(feed_id, item_id);
-        Wrapper wrapper = new Wrapper();
-        wrapper.wrap(item);
-        return wrapper;
+        ItemInfo information = new ItemInfo();
+        information.setInfo(item);
+        return information;
     }
 
 //    @POST

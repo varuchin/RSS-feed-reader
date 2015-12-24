@@ -1,25 +1,21 @@
-package com.mera.varuchin.wrap;
+package com.mera.varuchin.info;
 
 
-import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class Wrapper {
+public class ItemInfo {
 
     private String title = null;
-    private String name = null;
     private String item_link = null;
     private String feed_link = null;
     private String pub_date = null;
     private String description = null;
     private String word = null;
-
-
-    public Wrapper() {
-    }
-
 
     public String getTitle() {
         return title;
@@ -27,14 +23,6 @@ public class Wrapper {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getItem_link() {
@@ -77,51 +65,35 @@ public class Wrapper {
         this.word = word;
     }
 
-
-    public void wrap(RssFeed rssFeed) {
-        this.name = rssFeed.getName();
-        this.feed_link = rssFeed.getLink().toString();
-    }
-
-    public void wrap(RssItem rssItem) {
+    public void setInfo(RssItem rssItem) {
         this.title = rssItem.getTitle();
         this.description = rssItem.getDescription();
-        this.pub_date = rssItem.getPubDate().toString();
+        this.pub_date = rssItem.getPubDate();
         this.item_link = rssItem.getLink().toString();
     }
 
-    public List<Wrapper> wrapFeedList(List<RssFeed> rssFeedList) {
-        List<Wrapper> result = new ArrayList<>();
-        rssFeedList.stream().forEach(feed -> {
-            Wrapper wrapper = new Wrapper();
-            wrapper.wrap(feed);
-            result.add(wrapper);
-        });
-        return result;
-    }
-
-    public List<Wrapper> wrapItemList(List<RssItem> rssItemList) {
-        List<Wrapper> result = new ArrayList<>();
+    public List<ItemInfo> setItemListInfo(List<RssItem> rssItemList) {
+        List<ItemInfo> result = new ArrayList<>();
         rssItemList.stream().forEach(item -> {
-            Wrapper wrapper = new Wrapper();
-            wrapper.wrap(item);
-            result.add(wrapper);
+            ItemInfo itemInfo = new ItemInfo();
+            itemInfo.setInfo(item);
+            result.add(itemInfo);
         });
         return result;
     }
 
-    public List<Wrapper> topWords(Map<String, Integer> map) {
-        List<Wrapper> wrappers = new ArrayList<>();
+    public List<ItemInfo> topWords(Map<String, Integer> map) {
+        List<ItemInfo> infos = new ArrayList<>();
         Set<String> keys = map.keySet();
         List<String> wordList = new ArrayList<>();
 
         wordList.addAll(keys);
         wordList.stream().limit(5).forEach(key -> {
-            Wrapper wrapper = new Wrapper();
-            wrapper.setWord(key);
-            wrappers.add(wrapper);
+            ItemInfo itemInfo = new ItemInfo();
+            itemInfo.setWord(key);
+            infos.add(itemInfo);
         });
 
-        return wrappers;
+        return infos;
     }
 }

@@ -1,3 +1,5 @@
+import com.mera.varuchin.Refresher;
+import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -6,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 
 public class Launcher {
@@ -21,8 +24,8 @@ public class Launcher {
         Locale.setDefault(Locale.ENGLISH);
         final HttpServer server = startServer();
 
-//        RssExecutor rssExecutor = new RssExecutor();
-//        rssExecutor.run(new Refresher(), 0, 10, TimeUnit.SECONDS);
+        RssExecutor rssExecutor = new RssExecutor();
+        rssExecutor.run(new Refresher(), 0, 20, TimeUnit.SECONDS);
 
         System.in.read();
         server.stop();
