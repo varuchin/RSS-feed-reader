@@ -11,20 +11,18 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-public final class Checker implements Runnable {
+public final class Refresher implements Runnable {
 
     @Override
     public void run() {
-        Session session = null;
-
-        try {
-            session = ServiceORM.getSessionFactory().openSession();
+        try (Session session = ServiceORM.openSession()) {
             Criteria criteria = session.createCriteria(RssFeed.class);
             List<RssFeed> feedInstances = criteria.list();
 
             System.out.println(feedInstances);
             if (feedInstances != null) {
-                feedInstances.stream().forEach(instance -> {
+                feedInstances.stream()
+                        .forEach(instance -> {
                     //ставить ZonedDateTime
                     LocalTime currentTime = LocalTime.now(ZoneId.of("Europe/Moscow"));
                     //смапить в базу modification time
@@ -32,7 +30,7 @@ public final class Checker implements Runnable {
                     long timeDifference = ChronoUnit.MINUTES
                             .between(instance.getCreationTime(), currentTime);
 
-                    //стер старые items и загрузил новые
+                    //сделать чтобы стер старые items и загрузил новые
                     //а не пересохранял
                     if (timeDifference >= 1) {
                         RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();
@@ -40,12 +38,6 @@ public final class Checker implements Runnable {
                     }
                 });
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        finally {
-            if(session != null && session.isOpen())
-                session.close();
         }
     }
 }

@@ -4,8 +4,7 @@ package com.mera.varuchin.wrap;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Wrapper {
 
@@ -15,9 +14,11 @@ public class Wrapper {
     private String feed_link = null;
     private String pub_date = null;
     private String description = null;
+    private String word = null;
 
 
-    public Wrapper(){}
+    public Wrapper() {
+    }
 
 
     public String getTitle() {
@@ -68,21 +69,30 @@ public class Wrapper {
         this.description = description;
     }
 
-    public void wrap(RssFeed rssFeed){
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
+    }
+
+
+    public void wrap(RssFeed rssFeed) {
         this.name = rssFeed.getName();
         this.feed_link = rssFeed.getLink().toString();
     }
 
-    public void wrap(RssItem rssItem){
+    public void wrap(RssItem rssItem) {
         this.title = rssItem.getTitle();
         this.description = rssItem.getDescription();
         this.pub_date = rssItem.getPubDate().toString();
         this.item_link = rssItem.getLink().toString();
     }
 
-    public List<Wrapper> wrapFeedList(List<RssFeed> rssFeedList){
+    public List<Wrapper> wrapFeedList(List<RssFeed> rssFeedList) {
         List<Wrapper> result = new ArrayList<>();
-        rssFeedList.stream().forEach(feed->{
+        rssFeedList.stream().forEach(feed -> {
             Wrapper wrapper = new Wrapper();
             wrapper.wrap(feed);
             result.add(wrapper);
@@ -90,9 +100,9 @@ public class Wrapper {
         return result;
     }
 
-    public List<Wrapper> wrapItemList(List<RssItem> rssItemList){
+    public List<Wrapper> wrapItemList(List<RssItem> rssItemList) {
         List<Wrapper> result = new ArrayList<>();
-        rssItemList.stream().forEach(item->{
+        rssItemList.stream().forEach(item -> {
             Wrapper wrapper = new Wrapper();
             wrapper.wrap(item);
             result.add(wrapper);
@@ -100,4 +110,18 @@ public class Wrapper {
         return result;
     }
 
+    public List<Wrapper> topWords(Map<String, Integer> map) {
+        List<Wrapper> wrappers = new ArrayList<>();
+        Set<String> keys = map.keySet();
+        List<String> wordList = new ArrayList<>();
+
+        wordList.addAll(keys);
+        wordList.stream().limit(5).forEach(key -> {
+            Wrapper wrapper = new Wrapper();
+            wrapper.setWord(key);
+            wrappers.add(wrapper);
+        });
+
+        return wrappers;
+    }
 }

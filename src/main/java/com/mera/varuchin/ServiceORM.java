@@ -26,7 +26,7 @@ public class ServiceORM {
         return null;
     }
 
-    public static synchronized SessionFactory getSessionFactory() {
+    private static synchronized SessionFactory getSessionFactory() {
         SessionFactory localSessionFactory = sessionFactory;
         if (localSessionFactory == null) {
             synchronized (SessionFactory.class) {

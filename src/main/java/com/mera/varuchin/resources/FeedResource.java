@@ -1,61 +1,73 @@
-package com.mera.varuchin.service;
+package com.mera.varuchin.resources;
 
 
 import com.mera.varuchin.dao.RSSfeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
+import com.mera.varuchin.dao.RssItemDAO;
+import com.mera.varuchin.dao.RssItemDAOImpl;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
-import org.json.JSONObject;
+import com.mera.varuchin.wrap.Wrapper;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 
 @Path("/rss")
 @Produces(MediaType.APPLICATION_JSON)
-public class FeedService {
+public class FeedResource {
 
     private RSSfeedDAO dao;
+    private RssItemDAO itemDAO = new RssItemDAOImpl();
 
-    public FeedService() {
+
+    public FeedResource() {
         dao = new RssFeedDAOImpl();
     }
 
-// написать единый get с wrapper'ом
+
+    @GET
+    @Path("/items/{page}/{pageSize}")
+    public List<Wrapper> getItems(@PathParam("page") Integer page,
+                                  @PathParam("pageSize") Integer pageSize) {
+        List<RssItem> items = itemDAO.getItems(page, pageSize);
+        Wrapper wrapper = new Wrapper();
+        List<Wrapper> wrappers = wrapper.wrapItemList(items);
+
+        return wrappers;
+    }
+
+    @GET
+    @Path("/feeds/{page}/{pageSize}")
+    public List<Wrapper> getFeeds(@PathParam("page") Integer page,
+                                  @PathParam("pageSize") Integer papeSize,
+                                  @QueryParam("name") String name) {
+        List<RssFeed> feeds = dao.getFeeds(page, papeSize, name);
+        Wrapper wrapper = new Wrapper();
+        List<Wrapper> wrappers = wrapper.wrapFeedList(feeds);
+
+        return wrappers;
+    }
+
+    @GET
+    @Path("items/{id}/words")
+    public List<Wrapper> getTopWords(@PathParam("id") Long id) {
+        Wrapper wrapper = new Wrapper();
+        List<Wrapper> wrappers = wrapper.topWords(itemDAO.getTopWords(id));
+
+        return wrappers;
+    }
+
 //    @GET
-//    @Path("/feeds/{page}/{pageSize}")
-//    public List<RssFeed> getFeeds(@PathParam("page") int page,
-//                                  @PathParam("pageSize") int papeSize,
-//                                  @QueryParam("name") String name) {
-//
-//        if(name == null){
-//
-//        }
-//
-//
+//    @Path("/feeds")
+//    public List<Wrapper> getAllFeeds(){
+//        List<RssFeed> feeds = dao.getAllRegisteredFeeds();
+//        Wrapper wrapper = new Wrapper();
+//        List<Wrapper> wrappers = wrapper.wrapFeedList(feeds);
+//        return wrappers;
 //    }
-
-
-    //+
-    @GET
-    @Path("/links")
-    public List<RssItem> getBySource(@QueryParam("url") URL url) {
-        return dao.getNewsFromSource(url);
-    }
-
-    //просто feeds
-    //+
-    @GET
-    @Path("/feeds/list")
-    public List<RssFeed> getByName(@QueryParam("page") int page,
-                                   @QueryParam("pageSize") int pageSize,
-                                   @QueryParam("name") String name) {
-
-        return dao.getFeedsByName(page, pageSize, name);
-    }
 
     //+
     @POST
@@ -72,14 +84,13 @@ public class FeedService {
         }
     }
 
-    //использовать один референс дао
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/feeds/{id}")
     public Response update(@PathParam("id") Long id, RssFeed rssFeed) {
         RssFeed originRssFeed = new RssFeedDAOImpl().getById(id);
 
-        if (dao.getById(id) == null) {
+        if (originRssFeed == null) {
             System.err.println("Nothing to update: no such element by this ID.");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
@@ -108,19 +119,13 @@ public class FeedService {
 
     //+
     @GET
-    @Path("/feeds/registered")
-    public List<RssFeed> getAll() {
-        return dao.getAllRegisteredFeeds();
-    }
-
-    //+
-    @GET
     @Path("/feeds/{feed_id}/items/{item_id}")
-    public String getBySource(@PathParam("feed_id") Long feed_id,
-                              @PathParam("item_id") Long item_id) {
-        JSONObject jsonObject = new JSONObject(dao.getBySource(feed_id, item_id));
-        System.err.println(dao.getBySource(feed_id, item_id));
-        return jsonObject.toString();
+    public Wrapper getBySource(@PathParam("feed_id") Long feed_id,
+                               @PathParam("item_id") Long item_id) {
+        RssItem item = dao.getBySource(feed_id, item_id);
+        Wrapper wrapper = new Wrapper();
+        wrapper.wrap(item);
+        return wrapper;
     }
 
 //    @POST
