@@ -38,6 +38,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
         RssExecutor rssExecutor = new RssExecutor();
         Runnable task = () -> {
+            System.err.println("ADDED");
             try (Session session = getSession()) {
                 session.beginTransaction();
                 session.save(rssFeed);
@@ -47,6 +48,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
                 session.getTransaction().commit();
             }
+            System.err.println("ADDED");
         };
 
         rssExecutor.run(task);
@@ -60,7 +62,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
             transaction.commit();
         }
     }
-
 
     @Override
     public void remove(Long id) {
