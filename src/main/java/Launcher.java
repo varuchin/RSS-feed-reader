@@ -2,6 +2,7 @@ import com.mera.varuchin.Refresher;
 import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ public class Launcher {
 
     private static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig()
-                .packages("com.mera.varuchin");
+                .packages("com.mera.varuchin").register(MultiPartFeature.class);
         return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
     }
 
@@ -25,7 +26,7 @@ public class Launcher {
         final HttpServer server = startServer();
 
         RssExecutor rssExecutor = new RssExecutor();
-        rssExecutor.run(new Refresher(), 0, 20, TimeUnit.SECONDS);
+        rssExecutor.run(new Refresher(), 0, 20, TimeUnit.MINUTES);
 
         System.in.read();
         server.stop();

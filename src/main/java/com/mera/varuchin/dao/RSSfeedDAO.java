@@ -7,7 +7,7 @@ import com.mera.varuchin.rss.RssItem;
 import java.net.URL;
 import java.util.List;
 
-public interface RSSfeedDAO {
+public interface RssFeedDAO {
 
     void add(RssFeed rssFeed);
 

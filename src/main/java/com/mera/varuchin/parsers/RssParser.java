@@ -17,13 +17,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
 
 public class RssParser {
 
-    public void parseSources(InputStream inputStream) {
+    public List<RssFeed> parseFeeds(InputStream inputStream) {
         RssExecutor rssExecutor = new RssExecutor();
-        Runnable task = () -> {
+        List<RssFeed> rssFeeds = new ArrayList<>();
+
+        Callable<List<RssFeed>> task = () -> {
             try {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
                         .newInstance();
@@ -49,15 +52,17 @@ public class RssParser {
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
                         }
-                        rssFeedDAO.add(rssFeed);
+                        rssFeeds.add(rssFeed);
+                        //rssFeedDAO.add(rssFeed);
                     });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            return rssFeeds;
         };
 
-        rssExecutor.run(task);
+        return rssExecutor.getFeeds(task);
     }
 
     public List<RssItem> parseItems(InputStream inputStream) {

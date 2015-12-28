@@ -1,18 +1,28 @@
 package com.mera.varuchin.resources;
 
 
-import com.mera.varuchin.dao.RSSfeedDAO;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.mera.varuchin.dao.RssFeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.dao.RssItemDAO;
-import com.mera.varuchin.dao.RssItemDAOImpl;
+import com.mera.varuchin.exceptions.DataBaseFeedException;
+import com.mera.varuchin.exceptions.FeedNotFoundException;
+import com.mera.varuchin.filters.RestAuthenticationFilter;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
+import com.mera.varuchin.modules.FeedModule;
+import com.mera.varuchin.modules.ItemModule;
+import com.mera.varuchin.parsers.RssParser;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
@@ -20,13 +30,11 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class FeedResource {
 
-    private RSSfeedDAO dao;
+    @Inject
+    private final RssFeedDAO dao = getFeedDAO();
 
-    private RssItemDAO itemDAO = new RssItemDAOImpl();
-
-    public FeedResource() {
-        dao = new RssFeedDAOImpl();
-    }
+    @Inject
+    private final RssItemDAO itemDAO = getItemDAO();
 
     @GET
     @Path("/items")
@@ -44,7 +52,10 @@ public class FeedResource {
     public List<FeedInfo> getFeeds(@QueryParam("page") Integer page,
                                    @QueryParam("pageSize") Integer papeSize,
                                    @QueryParam("name") String name) {
+        RestAuthenticationFilter restAutentificationFilter =
+                new RestAuthenticationFilter();
         List<RssFeed> feeds = dao.getFeeds(page, papeSize, name);
+        System.out.println(feeds.size());
         FeedInfo feedInfo = new FeedInfo();
         List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
 
@@ -78,9 +89,12 @@ public class FeedResource {
             dao.add(rssFeed);
             URI location = URI.create("/rss/feeds" + rssFeed.getId());
             return Response.created(location).build();
+
         } else {
+            FeedInfo feedInfo = new FeedInfo();
+            feedInfo.setInfo(rssFeed);
             System.err.println("Such feed is already in the DB");
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            throw new DataBaseFeedException("Such feed is already in the DB", feedInfo);
         }
     }
 
@@ -92,7 +106,8 @@ public class FeedResource {
 
         if (originRssFeed == null) {
             System.err.println("Nothing to update: no such element by this ID.");
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            throw new FeedNotFoundException
+                    ("Nothing to update: no such element by this ID.");
         } else {
             System.err.print("RSS Feed was found.");
             originRssFeed.setName(rssFeed.getName());
@@ -111,7 +126,7 @@ public class FeedResource {
         RssFeed originRssFeed = dao.getById(id);
         if (originRssFeed == null) {
             System.err.println("RSS item with such ID is not found.");
-            return Response.status(Response.Status.NOT_FOUND).build();
+            throw new FeedNotFoundException("RSS item with such ID is not found.");
         }
         dao.remove(id);
         return Response.ok().build();
@@ -130,9 +145,35 @@ public class FeedResource {
 
 //    @POST
 //    @Path("feeds/upload")
-//    @Produces("text/xml")
-//    public Response addFeed(@Multipart(value = "sources", type = "text/xml") ObjectInputStream inputStream) {
-//        dao.parseSources(inputStream);
-//        return Response.status(Response.Status.CREATED).build();
+//    @Consumes(MediaType.MULTIPART_FORM_DATA)
+//    public Response addFeeds(@FormDataParam("inputStream") InputStream inputStream) {
+//        RssParser.parseSources(inputStream);
+//        return Response.ok().build();
 //    }
+
+    private RssFeedDAO getFeedDAO() {
+        Injector injector = Guice.createInjector(new FeedModule());
+        RssFeedDAO dao = injector.getInstance(RssFeedDAO.class);
+        return dao;
+    }
+
+    private RssItemDAO getItemDAO() {
+        Injector injector = Guice.createInjector(new ItemModule());
+        RssItemDAO itemDAO = injector.getInstance(RssItemDAO.class);
+        return itemDAO;
+    }
+
+    @POST
+    @Path("feeds/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public void postForm(
+            @FormDataParam("file") InputStream file) {
+        RssParser rssParser = new RssParser();
+        List<RssFeed> feeds = rssParser.parseFeeds(file);
+
+        System.out.println(feeds);
+
+        feeds.stream().forEach(feed-> dao.add(feed));
+
+    }
 }

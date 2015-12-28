@@ -9,7 +9,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import javax.inject.Singleton;
 
 @Singleton
-//sessionProvider
 public class SessionProvider {
     private static volatile SessionFactory sessionFactory = setUp();
 
@@ -40,7 +39,7 @@ public class SessionProvider {
         return sessionFactory;
     }
 
-    public static Session openSession() {
+    public Session openSession() {
         return getSessionFactory().openSession();
     }
 }

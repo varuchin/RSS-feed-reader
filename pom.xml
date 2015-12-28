@@ -23,6 +23,18 @@
 
     <dependencies>
 
+        <!--<dependency>-->
+            <!--<groupId>com.google.inject</groupId>-->
+            <!--<artifactId>guice</artifactId>-->
+            <!--<version>3.0</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>4.0-beta5</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
@@ -142,6 +154,7 @@
             <version>4.9</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>

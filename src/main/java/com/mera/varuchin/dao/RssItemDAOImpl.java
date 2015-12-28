@@ -1,6 +1,9 @@
 package com.mera.varuchin.dao;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
+import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.parsers.RssParser;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
@@ -18,7 +21,10 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Order;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 public class RssItemDAOImpl implements RssItemDAO {
@@ -60,7 +66,7 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     @Override
     public void remove(RssItem rssItem) {
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             session.beginTransaction();
             session.delete(rssItem);
             session.getTransaction().commit();
@@ -71,7 +77,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     public List<RssItem> getItems(Integer page, Integer pageSize) {
         List<RssItem> items;
 
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             if (page != null && pageSize != null) {
                 Criteria criteria = session.createCriteria(RssItem.class);
                 criteria.setFirstResult(page);
@@ -92,7 +98,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     @Override
     public RssItem getById(Long id) {
         RssItem result;
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             String hqlQuery = "from RssItem WHERE ID = :id";
             Query query = session.createQuery(hqlQuery).setParameter("id", id);
             result = (RssItem) query.uniqueResult();
@@ -103,7 +109,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     @Override
     public List<RssItem> getAllItemsWithId(Long feed_id) {
         List<RssItem> result;
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             String hql = "FROM RssItem WHERE FEED_ID = :feed_id";
             Query query = session.createQuery(hql);
             query.setParameter("feed_id", feed_id);
@@ -153,13 +159,18 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     public static void add(RssItem rssItem) {
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             session.beginTransaction();
             session.save(rssItem);
             session.getTransaction().commit();
         }
     }
 
+    private static Session getSession() {
+        Injector injector = Guice.createInjector(new HibernateModule());
+        SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
+        return sessionProvider.openSession();
+    }
 //    @Override
 //    public Map<String, URL> getAllSourcesRss() {
 //        List<RssItem> collection = getAllItems();

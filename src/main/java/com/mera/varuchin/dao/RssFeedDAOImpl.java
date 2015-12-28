@@ -1,6 +1,9 @@
 package com.mera.varuchin.dao;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
+import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.parsers.RssParser;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
@@ -24,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 
 
-public class RssFeedDAOImpl implements RSSfeedDAO {
+public class RssFeedDAOImpl implements RssFeedDAO {
 
     @Override
     public void add(RssFeed rssFeed) {
@@ -35,7 +38,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
 
         RssExecutor rssExecutor = new RssExecutor();
         Runnable task = () -> {
-            try (Session session = SessionProvider.openSession()) {
+            try (Session session = getSession()) {
                 session.beginTransaction();
                 session.save(rssFeed);
 
@@ -51,7 +54,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
 
     @Override
     public void update(RssFeed rssFeed) {
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             Transaction transaction = session.beginTransaction();
             session.update(rssFeed);
             transaction.commit();
@@ -63,15 +66,94 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
     public void remove(Long id) {
         RssFeed rssFeed = new RssFeedDAOImpl().getById(id);
 
-        try (Session session = SessionProvider.openSession()) {
+        try (Session session = getSession()) {
             session.beginTransaction();
             session.delete(rssFeed);
             session.getTransaction().commit();
         }
     }
 
-    private static void deleteItems(RssFeed rssFeed) {
-        try (Session session = SessionProvider.openSession()) {
+    @Override
+    public void refresh(RssFeed rssFeed) {
+        deleteItems(rssFeed);
+        addItems(rssFeed);
+        rssFeed.setModificationTime(ZonedDateTime.now());
+    }
+
+    @Override
+    public RssFeed getById(Long id) {
+        RssFeed result;
+
+        try (Session session = getSession()) {
+            result = (RssFeed) session.get(RssFeed.class, id);
+            System.err.println(result);
+        }
+        return result;
+    }
+
+    @Override
+    public RssFeed getByLink(URL link) {
+        try (Session session = getSession()) {
+            String hqlQuery = "FROM RssFeed WHERE LINK = :link";
+            Query query = session.createQuery(hqlQuery).setParameter("link", link.toString());
+            return (RssFeed) query.uniqueResult();
+        }
+    }
+
+    @Override
+    public RssItem getBySource(Long feed_id, Long item_id) {
+        RssFeed rssFeed = new RssFeedDAOImpl().getById(feed_id);
+
+        if (rssFeed == null) {
+            System.err.println("No feed with such ID.");
+            return null;
+        }
+        RssItem rssItem = new RssItemDAOImpl().getById(item_id);
+        if (rssItem == null) {
+            System.err.println("No item with such ID.");
+            return null;
+        }
+        System.out.println(rssItem);
+        return rssItem;
+    }
+
+
+    @Override
+    public List<RssFeed> getFeeds(Integer page, Integer pageSize, String name) {
+        List<RssFeed> feeds;
+        try (Session session = getSession()) {
+            if (name != null) {
+                String param = "%" + name + "%";
+                Query query = session.createQuery("FROM RssFeed WHERE lower(NAME) LIKE lower" +
+                        "(:NAME) ORDER BY NAME ASC");
+
+                query.setParameter("NAME", param);
+                query.setFirstResult(page);
+                query.setMaxResults(pageSize);
+
+                feeds = query.list();
+                System.err.println(feeds);
+            } else if (page != null && pageSize != null) {
+                Criteria criteria = session.createCriteria(RssFeed.class);
+                criteria.setFirstResult(page);
+                criteria.setMaxResults(pageSize);
+                feeds = criteria.list();
+                System.err.println(feeds);
+            } else {
+//                String hql = "FROM RssFeed";
+//                Query query = session.createQuery(hql);
+//                feeds = query.list();
+                Criteria criteria = session.createCriteria(RssFeed.class);
+                feeds = criteria.list();
+                System.err.println(feeds);
+            }
+        }
+
+        return feeds;
+    }
+
+    private void deleteItems(RssFeed rssFeed) {
+        try (Session session = getSession()) {
             session.beginTransaction();
 
             String hql = "DELETE FROM RssItem WHERE FEED_ID = :feed_id";
@@ -84,7 +166,7 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         }
     }
 
-    private static void addItems(RssFeed rssFeed) {
+    private void addItems(RssFeed rssFeed) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
         try {
@@ -115,77 +197,10 @@ public class RssFeedDAOImpl implements RSSfeedDAO {
         }
     }
 
-    @Override
-    public void refresh(RssFeed rssFeed) {
-        deleteItems(rssFeed);
-        addItems(rssFeed);
-        rssFeed.setModificationTime(ZonedDateTime.now());
-    }
-
-    @Override
-    public RssFeed getById(Long id) {
-        RssFeed result;
-
-        try (Session session = SessionProvider.openSession()) {
-            result = (RssFeed) session.get(RssFeed.class, id);
-            System.err.println(result);
-        }
-        return result;
-    }
-
-    @Override
-    public RssFeed getByLink(URL link) {
-        try (Session session = SessionProvider.openSession()) {
-            String hqlQuery = "FROM RssFeed WHERE LINK = :link";
-            Query query = session.createQuery(hqlQuery).setParameter("link", link.toString());
-            return (RssFeed) query.uniqueResult();
-        }
-    }
-
-    @Override
-    public RssItem getBySource(Long feed_id, Long item_id) {
-        RssFeed rssFeed = new RssFeedDAOImpl().getById(feed_id);
-
-        if (rssFeed == null) {
-            System.err.println("No feed with such ID.");
-            return null;
-        }
-        RssItem rssItem = new RssItemDAOImpl().getById(item_id);
-        if (rssItem == null) {
-            System.err.println("No item with such ID.");
-            return null;
-        }
-        System.out.println(rssItem);
-        return rssItem;
-    }
-
-
-    @Override
-    public List<RssFeed> getFeeds(Integer page, Integer pageSize, String name) {
-        List<RssFeed> feeds;
-        try (Session session = SessionProvider.openSession()) {
-            if (name != null) {
-                String param = "%" + name + "%";
-                Query query = session.createQuery("FROM RssFeed WHERE lower(NAME) LIKE lower" +
-                        "(:NAME) ORDER BY NAME ASC");
-
-                query.setParameter("NAME", param);
-                query.setFirstResult(page);
-                query.setMaxResults(pageSize);
-
-                feeds = query.list();
-            } else if (page != null && pageSize != null) {
-                Criteria criteria = session.createCriteria(RssFeed.class);
-                criteria.setFirstResult(page);
-                criteria.setMaxResults(pageSize);
-                feeds = criteria.list();
-            } else {
-                Criteria criteria = session.createCriteria(RssFeed.class);
-                feeds = criteria.list();
-            }
-        }
-
-        return feeds;
+    private static Session getSession() {
+        Injector injector = Guice.createInjector(new HibernateModule());
+        SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
+        return sessionProvider.openSession();
     }
 
 }
