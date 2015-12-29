@@ -4,7 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
 import com.mera.varuchin.modules.HibernateModule;
-import com.mera.varuchin.parsers.RssParser;
+import com.mera.varuchin.parsers.ItemParser;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
@@ -47,7 +47,7 @@ public class RssItemDAOImpl implements RssItemDAO {
                 HttpEntity httpEntity = response.getEntity();
 
                 if (httpEntity != null) {
-                    RssParser parser = new RssParser();
+                    ItemParser parser = new ItemParser();
                     InputStream inputStream = httpEntity.getContent();
                     List<RssItem> items = parser.parseItems(inputStream);
                     items.forEach(item -> {

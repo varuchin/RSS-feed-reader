@@ -4,7 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
 import com.mera.varuchin.modules.HibernateModule;
-import com.mera.varuchin.parsers.RssParser;
+import com.mera.varuchin.parsers.ItemParser;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
@@ -38,7 +38,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
         RssExecutor rssExecutor = new RssExecutor();
         Runnable task = () -> {
-            System.err.println("ADDED");
             try (Session session = getSession()) {
                 session.beginTransaction();
                 session.save(rssFeed);
@@ -48,7 +47,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
                 session.getTransaction().commit();
             }
-            System.err.println("ADDED");
         };
 
         rssExecutor.run(task);
@@ -133,20 +131,17 @@ public class RssFeedDAOImpl implements RssFeedDAO {
                 query.setMaxResults(pageSize);
 
                 feeds = query.list();
-                System.err.println(feeds);
             } else if (page != null && pageSize != null) {
                 Criteria criteria = session.createCriteria(RssFeed.class);
                 criteria.setFirstResult(page);
                 criteria.setMaxResults(pageSize);
                 feeds = criteria.list();
-                System.err.println(feeds);
             } else {
 //                String hql = "FROM RssFeed";
 //                Query query = session.createQuery(hql);
 //                feeds = query.list();
                 Criteria criteria = session.createCriteria(RssFeed.class);
                 feeds = criteria.list();
-                System.err.println(feeds);
             }
         }
 
@@ -182,7 +177,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
             HttpEntity httpEntity = response.getEntity();
 
             if (httpEntity != null) {
-                RssParser parser = new RssParser();
+                ItemParser parser = new ItemParser();
                 InputStream inputStream = httpEntity.getContent();
                 List<RssItem> items = parser.parseItems(inputStream);
 

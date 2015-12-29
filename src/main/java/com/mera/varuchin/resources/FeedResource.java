@@ -9,12 +9,12 @@ import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.exceptions.DataBaseFeedException;
 import com.mera.varuchin.exceptions.FeedNotFoundException;
-import com.mera.varuchin.filters.RestAuthenticationFilter;
+import com.mera.varuchin.exceptions.MultiPartQueryException;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
 import com.mera.varuchin.modules.FeedModule;
 import com.mera.varuchin.modules.ItemModule;
-import com.mera.varuchin.parsers.RssParser;
+import com.mera.varuchin.parsers.FeedParser;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -52,10 +52,7 @@ public class FeedResource {
     public List<FeedInfo> getFeeds(@QueryParam("page") Integer page,
                                    @QueryParam("pageSize") Integer papeSize,
                                    @QueryParam("name") String name) {
-        RestAuthenticationFilter restAutentificationFilter =
-                new RestAuthenticationFilter();
         List<RssFeed> feeds = dao.getFeeds(page, papeSize, name);
-        System.out.println(feeds.size());
         FeedInfo feedInfo = new FeedInfo();
         List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
 
@@ -70,15 +67,6 @@ public class FeedResource {
 
         return information;
     }
-
-//    @GET
-//    @Path("/feeds")
-//    public List<Wrapper> getAllFeeds(){
-//        List<RssFeed> feeds = dao.getAllRegisteredFeeds();
-//        Wrapper wrapper = new Wrapper();
-//        List<Wrapper> wrappers = wrapper.wrapFeedList(feeds);
-//        return wrappers;
-//    }
 
     //+
     @POST
@@ -148,12 +136,12 @@ public class FeedResource {
     @Path("feeds/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public void postForm(@FormDataParam("DOCUMENT") InputStream document) {
-        RssParser rssParser = new RssParser();
-        List<RssFeed> feeds = rssParser.parseFeeds(document);
-        System.out.println(feeds);
+        FeedParser parser = new FeedParser();
+        List<RssFeed> feeds = parser.parseFeeds(document);
+        if (feeds == null)
+            throw new MultiPartQueryException("Unable to read sources from document.");
 
-        feeds.stream().forEach(feed-> dao.add(feed));
-        System.err.println("123");
+        feeds.stream().forEach(feed -> dao.add(feed));
     }
 
     private RssFeedDAO getFeedDAO() {
