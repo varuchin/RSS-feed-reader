@@ -143,13 +143,18 @@ public class FeedResource {
         return information;
     }
 
-//    @POST
-//    @Path("feeds/upload")
-//    @Consumes(MediaType.MULTIPART_FORM_DATA)
-//    public Response addFeeds(@FormDataParam("inputStream") InputStream inputStream) {
-//        RssParser.parseSources(inputStream);
-//        return Response.ok().build();
-//    }
+
+    @POST
+    @Path("feeds/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public void postForm(@FormDataParam("DOCUMENT") InputStream document) {
+        RssParser rssParser = new RssParser();
+        List<RssFeed> feeds = rssParser.parseFeeds(document);
+        System.out.println(feeds);
+
+        feeds.stream().forEach(feed-> dao.add(feed));
+        System.err.println("123");
+    }
 
     private RssFeedDAO getFeedDAO() {
         Injector injector = Guice.createInjector(new FeedModule());
@@ -161,19 +166,5 @@ public class FeedResource {
         Injector injector = Guice.createInjector(new ItemModule());
         RssItemDAO itemDAO = injector.getInstance(RssItemDAO.class);
         return itemDAO;
-    }
-
-    @POST
-    @Path("feeds/upload")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public void postForm(
-            @FormDataParam("file") InputStream file) {
-        RssParser rssParser = new RssParser();
-        List<RssFeed> feeds = rssParser.parseFeeds(file);
-
-        System.out.println(feeds);
-
-        feeds.stream().forEach(feed-> dao.add(feed));
-
     }
 }
