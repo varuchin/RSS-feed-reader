@@ -9,6 +9,7 @@ import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.exceptions.DataBaseFeedException;
 import com.mera.varuchin.exceptions.FeedNotFoundException;
+import com.mera.varuchin.exceptions.ItemsNotFoundException;
 import com.mera.varuchin.exceptions.MultiPartQueryException;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
@@ -41,6 +42,9 @@ public class FeedResource {
     public List<ItemInfo> getItems(@QueryParam("page") Integer page,
                                    @QueryParam("pageSize") Integer pageSize) {
         List<RssItem> items = itemDAO.getItems(page, pageSize);
+        if(items == null)
+            throw new ItemsNotFoundException("No items were found.");
+
         ItemInfo information = new ItemInfo();
         List<ItemInfo> result = information.setItemListInfo(items);
 
@@ -50,9 +54,9 @@ public class FeedResource {
     @GET
     @Path("/feeds")
     public List<FeedInfo> getFeeds(@QueryParam("page") Integer page,
-                                   @QueryParam("pageSize") Integer papeSize,
+                                   @QueryParam("pageSize") Integer pageSize,
                                    @QueryParam("name") String name) {
-        List<RssFeed> feeds = dao.getFeeds(page, papeSize, name);
+        List<RssFeed> feeds = dao.getFeeds(page, pageSize, name);
         FeedInfo feedInfo = new FeedInfo();
         List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
 
@@ -126,6 +130,10 @@ public class FeedResource {
     public ItemInfo getBySource(@PathParam("feed_id") Long feed_id,
                                 @PathParam("item_id") Long item_id) {
         RssItem item = dao.getBySource(feed_id, item_id);
+
+        if(item == null)
+            throw new ItemsNotFoundException("Item not found.");
+
         ItemInfo information = new ItemInfo();
         information.setInfo(item);
         return information;

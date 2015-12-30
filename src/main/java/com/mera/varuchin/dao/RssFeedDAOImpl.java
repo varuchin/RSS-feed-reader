@@ -5,7 +5,6 @@ import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
 import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.parsers.ItemParser;
-import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import org.apache.http.HttpEntity;
@@ -35,21 +34,15 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         if (feed != null) {
             return;
         }
+        try (Session session = getSession()) {
+            session.beginTransaction();
+            session.save(rssFeed);
 
-        RssExecutor rssExecutor = new RssExecutor();
-        Runnable task = () -> {
-            try (Session session = getSession()) {
-                session.beginTransaction();
-                session.save(rssFeed);
+            RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
+            rssItemDAO.add(rssFeed);
 
-                RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
-                rssItemDAO.add(rssFeed);
-
-                session.getTransaction().commit();
-            }
-        };
-
-        rssExecutor.run(task);
+            session.getTransaction().commit();
+        }
     }
 
     @Override
