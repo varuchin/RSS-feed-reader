@@ -85,7 +85,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
         try (Session session = getSession()) {
             result = (RssFeed) session.get(RssFeed.class, id);
-            System.err.println(result);
         }
         return result;
     }
@@ -112,7 +111,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
             System.err.println("No item with such ID.");
             return null;
         }
-        System.out.println(rssItem);
         return rssItem;
     }
 

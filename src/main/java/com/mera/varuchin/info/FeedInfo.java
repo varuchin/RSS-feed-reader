@@ -13,6 +13,10 @@ public class FeedInfo {
 
     public FeedInfo(){}
 
+    public FeedInfo(RssFeed rssFeed){
+        this.name = rssFeed.getName();
+        this.feed_link = rssFeed.getLink().toString();
+    }
 
     public String getName() {
         return name;

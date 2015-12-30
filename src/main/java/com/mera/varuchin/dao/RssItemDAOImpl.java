@@ -155,6 +155,7 @@ public class RssItemDAOImpl implements RssItemDAO {
                 return 1;
         });
         result.putAll(map);
+
         return result;
     }
 
@@ -171,16 +172,5 @@ public class RssItemDAOImpl implements RssItemDAO {
         SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
         return sessionProvider.openSession();
     }
-//    @Override
-//    public Map<String, URL> getAllSourcesRss() {
-//        List<RssItem> collection = getAllItems();
-//        Map<String, URL> result = new HashMap<>();
-//
-//        //System.out.println(collection);
-//        collection.stream().forEach(rssItem -> {
-//            result.put(rssItem.getTitle(), rssItem.getLink());
-//        });
-//        System.out.println(result);
-//        return result;
-//    }
+
 }
