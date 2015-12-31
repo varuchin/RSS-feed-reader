@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 
 public class RssItemDAOImpl implements RssItemDAO {
 
+    public RssItemDAOImpl(){}
+
     @Override
     public void add(RssFeed rssFeed) {
         RssExecutor rssExecutor = new RssExecutor();

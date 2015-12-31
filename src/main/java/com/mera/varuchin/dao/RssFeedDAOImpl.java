@@ -28,6 +28,8 @@ import java.util.List;
 
 public class RssFeedDAOImpl implements RssFeedDAO {
 
+    public RssFeedDAOImpl(){}
+
     @Override
     public void add(RssFeed rssFeed) {
         RssFeed feed = new RssFeedDAOImpl().getByLink(rssFeed.getLink());

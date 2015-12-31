@@ -37,6 +37,8 @@ public class FeedResource {
     @Inject
     private final RssItemDAO itemDAO = getItemDAO();
 
+    public FeedResource(){}
+
     @GET
     @Path("/items")
     public List<ItemInfo> getItems(@QueryParam("page") Integer page,

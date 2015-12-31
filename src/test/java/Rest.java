@@ -19,14 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static org.mockito.Mockito.mock;
+
 public class Rest extends JerseyTest {
 
     @Override
     protected javax.ws.rs.core.Application configure() {
-        return new ResourceConfig(FeedResource.class).register(MultiPartFeature.class);
+        return new ResourceConfig(FeedResource.class).packages().register(MultiPartFeature.class);
     }
 
-    @Ignore
+
+
     @Test
     public void testGetItemsQuery() throws MalformedURLException, InterruptedException {
         RssFeed feed = new RssFeed("Health",
@@ -98,19 +101,25 @@ public class Rest extends JerseyTest {
 
     // ???HTTP 500 Internal Server Error???
     @Test
-    public void testDeleteQuery() throws MalformedURLException {
+    public void testDeleteQuery() throws MalformedURLException, InterruptedException{
+        RssFeed rssFeed = mock(RssFeed.class);
+        rssFeed.setLink(new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+        rssFeed.setName("Politics");
+
         RssFeed feed = new RssFeed("Politics",
                 new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
         target("/rss/feeds").request()
                 .post(Entity.entity(feed, MediaType.APPLICATION_JSON));
 
+        Thread.sleep(1000);
         List<FeedInfo> beforeDelete = target("/rss/feeds")
-                .request().get(new GenericType<List<FeedInfo>>(){});
+                .request(MediaType.APPLICATION_JSON).get(new GenericType<List<FeedInfo>>(){});
 
+        Thread.sleep(1000);
         target("/rss/feeds/1").request().delete();
 
         List<FeedInfo> afterDelete = target("/rss/feeds")
-                .request().get(new GenericType<List<FeedInfo>>(){});
+                .request(MediaType.APPLICATION_JSON).get(new GenericType<List<FeedInfo>>(){});
 
         Assert.assertTrue(beforeDelete.size() == 1);
         Assert.assertTrue(afterDelete.size() == 0);
