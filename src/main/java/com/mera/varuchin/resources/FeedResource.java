@@ -32,10 +32,10 @@ import java.util.List;
 public class FeedResource {
 
     @Inject
-    private final RssFeedDAO dao = getFeedDAO();
+    private RssFeedDAO dao = getFeedDAO();
 
     @Inject
-    private final RssItemDAO itemDAO = getItemDAO();
+    private RssItemDAO itemDAO = getItemDAO();
 
     public FeedResource(){}
 

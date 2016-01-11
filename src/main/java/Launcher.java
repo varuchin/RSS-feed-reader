@@ -1,4 +1,7 @@
 import com.mera.varuchin.Refresher;
+import com.mera.varuchin.modules.FeedModule;
+import com.mera.varuchin.modules.HibernateModule;
+import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -17,7 +20,11 @@ public class Launcher {
 
     private static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig()
-                .packages("com.mera.varuchin").register(MultiPartFeature.class);
+                .packages("com.mera.varuchin").register(new FeedModule())
+                .register(new ItemModule())
+                .register(new HibernateModule())
+                .register(MultiPartFeature.class);
+
         return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
     }
 

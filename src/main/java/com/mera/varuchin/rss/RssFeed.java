@@ -22,7 +22,7 @@ public class RssFeed {
     @Column
     private URL link;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "rssFeed", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "rssFeed", cascade = CascadeType.REMOVE)
     private Set<RssItem> items = new HashSet<>();
 
     @Column
