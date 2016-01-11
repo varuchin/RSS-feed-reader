@@ -1,25 +1,17 @@
 package com.mera.varuchin.resources;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.mera.varuchin.dao.RssFeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
-import com.mera.varuchin.dao.RssItemDAO;
-import com.mera.varuchin.exceptions.DataBaseFeedException;
-import com.mera.varuchin.exceptions.FeedNotFoundException;
-import com.mera.varuchin.exceptions.ItemsNotFoundException;
-import com.mera.varuchin.exceptions.MultiPartQueryException;
+import com.mera.varuchin.dao.RssItemDAOImpl;
+import com.mera.varuchin.exceptions.*;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
-import com.mera.varuchin.modules.FeedModule;
-import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.parsers.FeedParser;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -27,24 +19,26 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
+
 @Path("/rss")
 @Produces(MediaType.APPLICATION_JSON)
 public class FeedResource {
 
     @Inject
-    private RssFeedDAO dao = getFeedDAO();
+    RssFeedDAOImpl dao;
 
     @Inject
-    private RssItemDAO itemDAO = getItemDAO();
+    RssItemDAOImpl itemDAO;
 
-    public FeedResource(){}
+    public FeedResource() {
+    }
 
     @GET
     @Path("/items")
     public List<ItemInfo> getItems(@QueryParam("page") Integer page,
                                    @QueryParam("pageSize") Integer pageSize) {
         List<RssItem> items = itemDAO.getItems(page, pageSize);
-        if(items == null)
+        if (items.size() == 0)
             throw new ItemsNotFoundException("No items were found.");
 
         ItemInfo information = new ItemInfo();
@@ -59,6 +53,9 @@ public class FeedResource {
                                    @QueryParam("pageSize") Integer pageSize,
                                    @QueryParam("name") String name) {
         List<RssFeed> feeds = dao.getFeeds(page, pageSize, name);
+        if (feeds.size() == 0)
+            throw new NoFeedsFoundException("No feeds are found in DB.");
+
         FeedInfo feedInfo = new FeedInfo();
         List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
 
@@ -79,6 +76,7 @@ public class FeedResource {
     @Path("/feeds")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(RssFeed rssFeed) {
+        System.out.println(dao);
         if (dao.getByLink(rssFeed.getLink()) == null) {
             dao.add(rssFeed);
             URI location = URI.create("/rss/feeds" + rssFeed.getId());
@@ -133,7 +131,7 @@ public class FeedResource {
                                 @PathParam("item_id") Long item_id) {
         RssItem item = dao.getBySource(feed_id, item_id);
 
-        if(item == null)
+        if (item == null)
             throw new ItemsNotFoundException("Item not found.");
 
         ItemInfo information = new ItemInfo();
@@ -152,17 +150,5 @@ public class FeedResource {
             throw new MultiPartQueryException("Unable to read sources from document.");
 
         feeds.stream().forEach(feed -> dao.add(feed));
-    }
-
-    private RssFeedDAO getFeedDAO() {
-        Injector injector = Guice.createInjector(new FeedModule());
-        RssFeedDAO dao = injector.getInstance(RssFeedDAO.class);
-        return dao;
-    }
-
-    private RssItemDAO getItemDAO() {
-        Injector injector = Guice.createInjector(new ItemModule());
-        RssItemDAO itemDAO = injector.getInstance(RssItemDAO.class);
-        return itemDAO;
     }
 }

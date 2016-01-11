@@ -10,15 +10,9 @@ public class FeedInfo {
 
     private String name = null;
     private String feed_link = null;
-    private RssFeed rssFeed;
 
     public FeedInfo(){}
 
-    public FeedInfo(RssFeed rssFeed){
-        this.name = rssFeed.getName();
-        this.feed_link = rssFeed.getLink().toString();
-        this.rssFeed = rssFeed;
-    }
 
     public String getName() {
         return name;
@@ -36,18 +30,9 @@ public class FeedInfo {
         this.feed_link = feed_link;
     }
 
-    public RssFeed getRssFeed() {
-        return rssFeed;
-    }
-
-    public void setRssFeed(RssFeed rssFeed) {
-        this.rssFeed = rssFeed;
-    }
-
     public void setInfo(RssFeed rssFeed) {
         this.name = rssFeed.getName();
         this.feed_link = rssFeed.getLink().toString();
-        this.rssFeed = rssFeed;
     }
 
     public List<FeedInfo> setFeedListInfo(List<RssFeed> rssFeedList) {
@@ -56,9 +41,9 @@ public class FeedInfo {
             FeedInfo feedInfo = new FeedInfo();
             feedInfo.setInfo(feed);
             result.add(feedInfo);
-            this.rssFeed = feed;
         });
-
+        System.err.println(result);
+        System.err.println(result.size());
         return result;
     }
 }

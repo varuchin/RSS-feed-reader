@@ -1,13 +1,14 @@
 package com.mera.varuchin.modules;
 
-import com.google.inject.AbstractModule;
-import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.dao.RssItemDAOImpl;
+import com.mera.varuchin.factories.ItemDaoFactory;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-public class ItemModule extends AbstractModule {
+public class ItemModule extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bind(RssItemDAO.class).to(RssItemDAOImpl.class);
+        bindFactory(ItemDaoFactory.class)
+                .to(RssItemDAOImpl.class);
     }
 }

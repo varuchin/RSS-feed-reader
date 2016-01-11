@@ -1,15 +1,16 @@
 package com.mera.varuchin.modules;
 
-import com.google.inject.AbstractModule;
-import com.mera.varuchin.dao.RssFeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
+import com.mera.varuchin.factories.FeedDaoFactory;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 
-public class FeedModule extends AbstractModule {
+public class FeedModule extends AbstractBinder {
 
     @Override
-    protected void configure() {
-        bind(RssFeedDAO.class).to(RssFeedDAOImpl.class);
+    protected void configure(){
+        bindFactory(FeedDaoFactory.class)
+                .to(RssFeedDAOImpl.class);
     }
 
 }

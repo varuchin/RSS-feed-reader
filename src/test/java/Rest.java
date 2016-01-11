@@ -1,5 +1,7 @@
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
+import com.mera.varuchin.modules.FeedModule;
+import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.resources.FeedResource;
 import com.mera.varuchin.rss.RssFeed;
 import junit.framework.Assert;
@@ -20,15 +22,69 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class Rest extends JerseyTest {
 
+    private FeedResource mockedResource;
+
     @Override
     protected javax.ws.rs.core.Application configure() {
-        return new ResourceConfig(FeedResource.class)
+        mockedResource = mock(FeedResource.class);
+        return new ResourceConfig(FeedResource.class).register(new FeedModule())
+                .register(new ItemModule())
                 .packages("com.mera.varuchin").register(MultiPartFeature.class);
     }
 
+
+    @Test
+    public void testGetFeedsMethod() {
+        final List<FeedInfo> mockedInfo = mock(List.class);
+        final FeedInfo mockedFeed = mock(FeedInfo.class);
+
+        mockedFeed.setName("TEST");
+        mockedFeed
+                .setFeed_link("http://feeds.bbci.co.uk/news/politics/rss.xml");
+        mockedInfo.add(0, mockedFeed);
+        when(mockedResource.getFeeds(null, null, null)).thenReturn(mockedInfo);
+
+        Assert.assertEquals
+                (mockedResource.getFeeds(null, null, null), mockedInfo);
+    }
+
+    @Test
+    public void testPostFeedMethod() {
+        RssFeed mockedFeed = mock(RssFeed.class);
+        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+
+        when(mockedResource.add(mockedFeed)).thenReturn(builder.build());
+
+        Assert.assertEquals
+                (mockedResource.add(mockedFeed).getStatus(), 200);
+    }
+
+    @Test
+    public void testPutMethod() throws MalformedURLException {
+        RssFeed mockedStartedFeed = mock(RssFeed.class);
+        RssFeed mockedChangedFeed = mock(RssFeed.class);
+
+        mockedStartedFeed.setName("Health");
+        mockedStartedFeed.setLink
+                (new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
+        mockedStartedFeed.setId(1L);
+
+        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
+
+        when(mockedResource
+                .update(1L, mockedChangedFeed)).thenReturn(builder.build());
+
+        Assert.assertEquals(mockedResource.update(1L, mockedChangedFeed), 200);
+    }
+
+    @Test
+    public void testGetTopWordsMethod() {
+
+    }
 
     @Ignore
     @Test
@@ -132,28 +188,29 @@ public class Rest extends JerseyTest {
 
     }
 
+    @Ignore
     @Test
     public void testGetAllFeedsQuery() throws MalformedURLException {
         List<RssFeed> feeds = new ArrayList<>();
-//
-//        RssFeed firstFeed = new RssFeed("TEST_NAME1",
-//                new URL("http://feeds.bbci.co.uk/news/world/rss.xml"));
-//        RssFeed secondFeed = new RssFeed("TEST_NAME2",
-//                new URL("http://feeds.bbci.co.uk/news/education/rss.xml"));
-//        RssFeed thirdFeed = new RssFeed("TEST_NAME3",
-//                new URL("http://feeds.bbci.co.uk/news/science_and_environment/rss.xml"));
-//
-//        feeds.add(firstFeed);
-//        feeds.add(secondFeed);
-//        feeds.add(thirdFeed);
-//
-//        feeds.stream().forEach(feed ->
-//                target("/rss/feeds").request()
-//                        .post(Entity.entity(feed, MediaType.APPLICATION_JSON)));
+
+        RssFeed firstFeed = new RssFeed("TEST_NAME1",
+                new URL("http://feeds.bbci.co.uk/news/world/rss.xml"));
+        RssFeed secondFeed = new RssFeed("TEST_NAME2",
+                new URL("http://feeds.bbci.co.uk/news/education/rss.xml"));
+        RssFeed thirdFeed = new RssFeed("TEST_NAME3",
+                new URL("http://feeds.bbci.co.uk/news/science_and_environment/rss.xml"));
+
+        feeds.add(firstFeed);
+        feeds.add(secondFeed);
+        feeds.add(thirdFeed);
+
+        feeds.stream().forEach(feed ->
+                target("/rss/feeds").request()
+                        .post(Entity.entity(feed, MediaType.APPLICATION_JSON)));
 
 
         List<FeedInfo> information = target("rss/feeds").request()
-                .get(new GenericType<List<FeedInfo>>(FeedInfo.class) {
+                .get(new GenericType<List<FeedInfo>>() {
                 });
 
         Assert.assertNotNull(feeds);
