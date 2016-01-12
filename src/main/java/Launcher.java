@@ -1,8 +1,10 @@
 import com.mera.varuchin.Refresher;
+import com.mera.varuchin.filters.RestAuthenticationFilter;
 import com.mera.varuchin.modules.FeedModule;
 import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -18,13 +20,11 @@ public class Launcher {
     private static final String BASE_URI = "http://localhost:8081";
 
     private static HttpServer startServer() {
-        final ResourceConfig rc = new ResourceConfig()
-                .packages("com.mera.varuchin")
+        final ResourceConfig rc = new ResourceConfig().packages("com.mera.varuchin")
                 .register(new FeedModule())
                 .register(new ItemModule())
-                        //.register(new FeedModule())
-                        //.register(new ItemModule())
-                        // .register(new HibernateModule())
+                .register(LoggingFilter.class)
+                .register(RestAuthenticationFilter.class)
                 .register(MultiPartFeature.class);
 
         return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);

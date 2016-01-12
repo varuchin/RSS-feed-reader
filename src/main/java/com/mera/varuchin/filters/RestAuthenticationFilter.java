@@ -4,9 +4,10 @@ package com.mera.varuchin.filters;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
-@Deprecated
+@Provider
 public class RestAuthenticationFilter implements Filter {
     public static final String AUTHENTICATION_HEADER = "Authorization";
 
@@ -37,6 +38,7 @@ public class RestAuthenticationFilter implements Filter {
     public void init(FilterConfig filterConfig) throws ServletException {
 
     }
+
     @Override
     public void destroy() {
 
