@@ -31,6 +31,7 @@ public class RssItemDAOImpl implements RssItemDAO {
 
     public RssItemDAOImpl(){}
 
+    //разбить на отдельные методы (3 степа)
     @Override
     public void add(RssFeed rssFeed) {
         RssExecutor rssExecutor = new RssExecutor();

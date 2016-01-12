@@ -6,12 +6,12 @@ import javax.ws.rs.core.Response;
 
 public class AuthorizationException extends WebApplicationException {
 
-    public AuthorizationException(){}
+    public AuthorizationException() {
+    }
 
-    public AuthorizationException(String message){
+    public AuthorizationException(String message) {
         super(Response.status(Response.Status.UNAUTHORIZED)
-                //.header("Explanation: ", message)
-                .entity(message).type(MediaType.TEXT_PLAIN).build());
+                .entity(message).type(MediaType.APPLICATION_JSON).build());
     }
 
 }

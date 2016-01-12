@@ -1,232 +1,286 @@
+import com.mera.varuchin.dao.RssFeedDAOImpl;
+import com.mera.varuchin.dao.RssItemDAOImpl;
+import com.mera.varuchin.exceptions.DataBaseFeedException;
+import com.mera.varuchin.exceptions.FeedNotFoundException;
+import com.mera.varuchin.exceptions.ItemsNotFoundException;
+import com.mera.varuchin.exceptions.NoFeedsFoundException;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
 import com.mera.varuchin.modules.FeedModule;
 import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.resources.FeedResource;
 import com.mera.varuchin.rss.RssFeed;
+import com.mera.varuchin.rss.RssItem;
 import junit.framework.Assert;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Map;
+import java.util.TreeMap;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class Rest extends JerseyTest {
 
-    private FeedResource mockedResource;
+    private FeedResource resource;
+    private RssFeedDAOImpl feedDAO;
+    private RssItemDAOImpl itemDAO;
 
     @Override
-    protected javax.ws.rs.core.Application configure() {
-        mockedResource = mock(FeedResource.class);
+    protected Application configure() {
+        feedDAO = mock(RssFeedDAOImpl.class);
+        itemDAO = mock(RssItemDAOImpl.class);
+
+        //resource = new FeedResource();
+        //resource.setDAO(feedDAO, itemDAO);
+
         return new ResourceConfig(FeedResource.class).register(new FeedModule())
                 .register(new ItemModule())
                 .packages("com.mera.varuchin").register(MultiPartFeature.class);
     }
 
-
     @Test
-    public void testGetFeedsMethod() {
-        final List<FeedInfo> mockedInfo = mock(List.class);
-        final FeedInfo mockedFeed = mock(FeedInfo.class);
+    public void testGetExistingItems() throws MalformedURLException {
+        List<ItemInfo> infos = new ArrayList<>();
+        List<RssItem> items = new ArrayList<>();
 
-        mockedFeed.setName("TEST");
-        mockedFeed
-                .setFeed_link("http://feeds.bbci.co.uk/news/politics/rss.xml");
-        mockedInfo.add(0, mockedFeed);
-        when(mockedResource.getFeeds(null, null, null)).thenReturn(mockedInfo);
+        ItemInfo firstInfo = new ItemInfo();
+        ItemInfo secondInfo = new ItemInfo();
+        firstInfo.setInfo("Title", "Description", "pub_date", "http://link.ru");
+        secondInfo.setInfo("Title2", "Description2", "pub_date2", "http://link2.ru");
 
-        Assert.assertEquals
-                (mockedResource.getFeeds(null, null, null), mockedInfo);
+        RssItem firstItem = new RssItem("Title", "Description", "pub_date",
+                new URL("http://link.ru"));
+        RssItem secondItem = new RssItem("Title2", "Description2", "pub_date2",
+                new URL("http://link2.ru"));
+
+        infos.add(firstInfo);
+        infos.add(secondInfo);
+        items.add(firstItem);
+        items.add(secondItem);
+
+        when(itemDAO.getItems(null, null)).thenReturn(items);
+
+        List<ItemInfo> result = resource.getItems(null, null);
+
+        verify(itemDAO).getItems(null, null);
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.isEmpty());
+        Assert.assertEquals(result.size(), 2);
+    }
+
+    @Test(expected = ItemsNotFoundException.class)
+    public void testThrowingItemsNotFoundException() {
+        when(itemDAO.getItems(null, null)).thenReturn(new ArrayList<>());
+        List<ItemInfo> result = resource.getItems(null, null);
+
+        verify(itemDAO).getItems(null, null);
+        Assert.assertTrue(result.size() == 0);
     }
 
     @Test
-    public void testPostFeedMethod() {
-        RssFeed mockedFeed = mock(RssFeed.class);
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
-
-        when(mockedResource.add(mockedFeed)).thenReturn(builder.build());
-
-        Assert.assertEquals
-                (mockedResource.add(mockedFeed).getStatus(), 200);
-    }
-
-    @Test
-    public void testPutMethod() throws MalformedURLException {
-        RssFeed mockedStartedFeed = mock(RssFeed.class);
-        RssFeed mockedChangedFeed = mock(RssFeed.class);
-
-        mockedStartedFeed.setName("Health");
-        mockedStartedFeed.setLink
-                (new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
-        mockedStartedFeed.setId(1L);
-
-        mockedChangedFeed.setName("ChangedName");
-        mockedChangedFeed.setLink(new URL("ChangedLink"));
-
-        Response.ResponseBuilder builder = Response.status(Response.Status.OK);
-
-        when(mockedResource
-                .update(1L, mockedChangedFeed)).thenReturn(builder.build());
-
-        Assert.assertEquals(mockedResource.update(1L, mockedChangedFeed), 200);
-    }
-
-    @Test
-    public void testGetTopWordsMethod() {
-
-    }
-
-    @Ignore
-    @Test
-    public void testGetItemsQuery() throws MalformedURLException, InterruptedException {
-//        RssFeed feed = new RssFeed("Health",
-//                new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
-//        target("/rss/feeds").request()
-//                .post(Entity.entity(feed, MediaType.APPLICATION_JSON));
-//
-//        Thread.sleep(300);
-
-        List<ItemInfo> information = target("/rss/items").request(MediaType.APPLICATION_JSON)
-                .get(new GenericType<ArrayList<ItemInfo>>() {
-                });
-
-        Assert.assertNotNull(information);
-    }
-
-    @Ignore
-    @Test
-    public void testGetTopWordsQuery() throws MalformedURLException, InterruptedException {
-        RssFeed feed = new RssFeed("Health",
-                new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
-        target("/rss/feeds").request()
-                .post(Entity.entity(feed, MediaType.APPLICATION_JSON));
-
-        Thread.sleep(300);
-        List<ItemInfo> information =
-                target("/rss/items/2/words").request(MediaType.APPLICATION_JSON)
-                        .get(new GenericType<ArrayList<ItemInfo>>() {
-                        });
-
-        Assert.assertNotNull(information);
-        Assert.assertEquals(5, information.size());
-    }
-
-    @Ignore
-    @Test
-    public void testPostQuery() throws MalformedURLException {
-        RssFeed rssFeed = new RssFeed("TEST_NAME",
-                new URL("http://feeds.bbci.co.uk/news/uk/rss.xml"));
-        Response response = target("/rss/feeds").request()
-                .post(Entity.entity(rssFeed, MediaType.APPLICATION_JSON));
-
-        Assert.assertNotNull(response);
-        Assert.assertTrue(response.getStatus() == 201);
-    }
-
-    //не работает
-    @Deprecated
-    @Ignore
-    @Test
-    public void testPutQuery() throws MalformedURLException, InterruptedException {
-        RssFeed feed = new RssFeed("Health",
-                new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
-        RssFeed changedFeed = new RssFeed("ChangedHealth",
-                new URL("http://feeds.bbci.co.uk/news/technology/rss.xml"));
-
-        target("/rss/feeds").request()
-                .post(Entity.entity(feed, MediaType.APPLICATION_JSON));
-
-        List<FeedInfo> information = target("rss/feeds").request()
-                .get(new GenericType<List<FeedInfo>>() {
-                });
-//        target("/rss/feeds/1").request()
-//                .put(Entity.entity(changedFeed, MediaType.APPLICATION_JSON));
-//
-//       List<FeedInfo> feeds = target("/rss/feeds").request(MediaType.APPLICATION_JSON)
-//               .get(new GenericType<List<FeedInfo>>(){});
-//        System.out.println(information.size());
-    }
-
-    // ???HTTP 500 Internal Server Error???
-    @Ignore
-    @Test
-    public void testDeleteQuery() throws MalformedURLException, InterruptedException {
-        RssFeed rssFeed = mock(RssFeed.class);
-        rssFeed.setLink(new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
-        rssFeed.setName("Politics");
-
-        RssFeed feed = new RssFeed("Politics",
-                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
-        target("/rss/feeds").request()
-                .post(Entity.entity(feed, MediaType.APPLICATION_JSON));
-
-        Thread.sleep(1000);
-        List<FeedInfo> beforeDelete = target("/rss/feeds")
-                .request(MediaType.APPLICATION_JSON)
-                .get(new GenericType<List<FeedInfo>>() {
-                });
-
-        Thread.sleep(1000);
-        target("/rss/feeds/1").request().delete();
-
-        List<FeedInfo> afterDelete = target("/rss/feeds")
-                .request(MediaType.APPLICATION_JSON).get(new GenericType<List<FeedInfo>>() {
-                });
-
-        Assert.assertTrue(beforeDelete.size() == 1);
-        Assert.assertTrue(afterDelete.size() == 0);
-
-
-    }
-
-    @Ignore
-    @Test
-    public void testGetAllFeedsQuery() throws MalformedURLException {
+    public void testGetExistingFeeds() throws MalformedURLException {
+        List<FeedInfo> infos = new ArrayList<>();
         List<RssFeed> feeds = new ArrayList<>();
 
-        RssFeed firstFeed = new RssFeed("TEST_NAME1",
-                new URL("http://feeds.bbci.co.uk/news/world/rss.xml"));
-        RssFeed secondFeed = new RssFeed("TEST_NAME2",
-                new URL("http://feeds.bbci.co.uk/news/education/rss.xml"));
-        RssFeed thirdFeed = new RssFeed("TEST_NAME3",
-                new URL("http://feeds.bbci.co.uk/news/science_and_environment/rss.xml"));
+        FeedInfo firstInfo = new FeedInfo();
+        FeedInfo secondInfo = new FeedInfo();
+        firstInfo.setInfo("FirstFeed", "http://feeds.bbci.co.uk/news/politics/rss.xml");
+        secondInfo.setInfo("SecondFeed", "http://feeds.bbci.co.uk/news/politics/rss.xml");
 
+        RssFeed firstFeed = new RssFeed("FirstFeed",
+                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+        RssFeed secondFeed = new RssFeed("SecondFeed",
+                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+
+        infos.add(firstInfo);
+        infos.add(secondInfo);
         feeds.add(firstFeed);
         feeds.add(secondFeed);
-        feeds.add(thirdFeed);
 
-        feeds.stream().forEach(feed ->
-                target("/rss/feeds").request()
-                        .post(Entity.entity(feed, MediaType.APPLICATION_JSON)));
+        when(feedDAO.getFeeds(null, null, null)).thenReturn(feeds);
 
+        List<FeedInfo> result = resource.getFeeds(null, null, null);
 
-        List<FeedInfo> information = target("rss/feeds").request()
-                .get(new GenericType<List<FeedInfo>>() {
-                });
-
-        Assert.assertNotNull(feeds);
-        Assert.assertEquals(feeds.size(), 3);
-
-        IntStream.range(0, 3).forEach(index -> {
-
-            Assert.assertTrue(feeds.get(index).getName()
-                    .equals(information.get(index).getName()));
-
-            Assert.assertTrue(feeds.get(index).getLink().toString()
-                    .equals(information.get(index).getFeed_link()));
-        });
+        verify(feedDAO).getFeeds(null, null, null);
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.isEmpty());
+        Assert.assertEquals(result.size(), 2);
     }
+
+    @Test(expected = NoFeedsFoundException.class)
+    public void testThrowingNoFeedsFoundException() {
+        when(feedDAO.getFeeds(null, null, null)).thenReturn(new ArrayList<>());
+        List<FeedInfo> result = resource.getFeeds(null, null, null);
+
+        verify(feedDAO).getFeeds(null, null, null);
+        Assert.assertTrue(result.size() == 0);
+    }
+
+    @Test
+    public void testTopWordsMethod() {
+        ItemInfo firstWord = mock(ItemInfo.class);
+        ItemInfo secondWord = mock(ItemInfo.class);
+        ItemInfo thirdWord = mock(ItemInfo.class);
+
+        Map<String, Integer> words = new TreeMap<>();
+
+        words.put("first", 1);
+        words.put("second", 2);
+        words.put("often", 8);
+
+        firstWord.setWord("first");
+        secondWord.setWord("second");
+        thirdWord.setWord("often");
+
+        when(itemDAO.getTopWords(1L)).thenReturn(words);
+
+        List<ItemInfo> infos = new ArrayList<>();
+        infos.add(thirdWord);
+        infos.add(secondWord);
+        infos.add(firstWord);
+
+        List<ItemInfo> result = resource.getTopWords(1L);
+
+        verify(itemDAO).getTopWords(1L);
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.isEmpty());
+        Assert.assertTrue(result.size() == 3);
+        Assert.assertTrue(result.size() == infos.size());
+    }
+
+    @Test
+    public void testAddNewFeed() throws MalformedURLException {
+        URL url = new URL("http://feeds.bbci.co.uk/news/politics/rss.xml");
+        RssFeed rssFeed = new RssFeed("FirstFeed",
+                url);
+        when(feedDAO.getByLink(url)).thenReturn(null);
+        doNothing().when(feedDAO).add(rssFeed);
+        Response expected = Response.status(Response.Status.CREATED).build();
+        Response result = resource.add(rssFeed);
+
+        verify(feedDAO).getByLink(url);
+        verify(feedDAO).add(rssFeed);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.getStatus(), result.getStatus());
+    }
+
+    @Test(expected = DataBaseFeedException.class)
+    public void testAddExistingFeed() throws MalformedURLException {
+        URL url = new URL("http://feeds.bbci.co.uk/news/politics/rss.xml");
+        RssFeed rssFeed = new RssFeed("FirstFeed",
+                url);
+        when(feedDAO.getByLink(url)).thenReturn(rssFeed);
+
+        resource.add(rssFeed);
+        verify(feedDAO.getByLink(url));
+    }
+
+    @Test
+    public void testUpdateExistingFeed() throws MalformedURLException {
+        RssFeed rssFeed = new RssFeed("FirstFeed",
+                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+
+        when(feedDAO.getById(1L)).thenReturn(rssFeed);
+        doNothing().when(feedDAO).update(rssFeed);
+
+        Response expected = Response.status(Response.Status.OK).build();
+        Response result = resource.update(1L, rssFeed);
+
+        verify(feedDAO).getById(1L);
+        verify(feedDAO).update(rssFeed);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getStatus() == 200);
+        Assert.assertTrue(expected.getStatus() == result.getStatus());
+    }
+
+    @Test(expected = FeedNotFoundException.class)
+    public void testUpdateNonExistentFeed() throws MalformedURLException {
+        RssFeed rssFeed = new RssFeed("TestFeed",
+                new URL("http://test.xml"));
+
+        when(feedDAO.getById(1L)).thenReturn(null);
+        resource.update(1L, rssFeed);
+
+        verify(feedDAO.getById(1L));
+    }
+
+    @Test
+    public void testDeleteExistingFeed() throws MalformedURLException {
+        RssFeed rssFeed = new RssFeed("TestFeed",
+                new URL("http://test.xml"));
+        when(feedDAO.getById(1L)).thenReturn(rssFeed);
+
+        Response expected = Response.status(Response.Status.OK).build();
+        Response result = resource.remove(1L);
+
+        verify(feedDAO).getById(1L);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getStatus() == 200);
+        Assert.assertEquals(expected.getStatus(), result.getStatus());
+    }
+
+    @Test(expected = FeedNotFoundException.class)
+    public void testDeleteNonExistentFeed() throws MalformedURLException {
+        when(feedDAO.getById(1L)).thenReturn(null);
+
+        resource.remove(1L);
+        verify(feedDAO).getById(1L);
+    }
+
+    @Test
+    public void testGetByExistingSource() throws MalformedURLException {
+        RssItem rssItem = new RssItem("Title", "Description", "Pub_Date",
+                new URL("https://test.com"));
+        when(feedDAO.getBySource(1L, 2L)).thenReturn(rssItem);
+
+        ItemInfo expected = new ItemInfo();
+        expected.setInfo(rssItem);
+        ItemInfo result = resource.getBySource(1L, 2L);
+
+        verify(feedDAO).getBySource(1L, 2L);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.getDescription(), expected.getDescription());
+        Assert.assertEquals(result.getFeedLink(), expected.getFeedLink());
+        Assert.assertEquals(result.getPub_date(), expected.getPub_date());
+        Assert.assertEquals(result.getFeedLink(), expected.getFeedLink());
+    }
+
+    @Test(expected = ItemsNotFoundException.class)
+    public void testGetByNonExistentSource() {
+        when(feedDAO.getBySource(1L, 2L)).thenReturn(null);
+
+        resource.getBySource(1L, 2L);
+        verify(feedDAO).getBySource(1L, 2L);
+    }
+
+
+//    @Test
+//    public void testMultipartMethod() throws MalformedURLException {
+//        List<RssFeed> feeds = new ArrayList<>();
+//        FeedParser mockedParser = mock(FeedParser.class);
+//        InputStream mockedDocument = mock(InputStream.class);
+//
+//        RssFeed firstFeed = new RssFeed("FirstFeed",
+//                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+//        RssFeed secondFeed = new RssFeed("SecondFeed",
+//                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
+//
+//        feeds.add(firstFeed);
+//        feeds.add(secondFeed);
+//
+//        when(mockedParser.parseFeeds(mockedDocument)).thenReturn(feeds);
+//
+//        feeds.stream().forEach(feed->{
+//            when(feed)
+//        });
+//    }
 }

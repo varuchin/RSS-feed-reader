@@ -39,7 +39,9 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         try (Session session = getSession()) {
             session.beginTransaction();
             session.save(rssFeed);
+            session.beginTransaction().commit();
 
+            session.beginTransaction();
             RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
             rssItemDAO.add(rssFeed);
 

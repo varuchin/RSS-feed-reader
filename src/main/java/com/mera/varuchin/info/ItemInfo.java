@@ -33,7 +33,7 @@ public class ItemInfo {
         this.item_link = item_link;
     }
 
-    public String getFeed_link() {
+    public String getFeedLink() {
         return feed_link;
     }
 
@@ -70,6 +70,14 @@ public class ItemInfo {
         this.description = rssItem.getDescription();
         this.pub_date = rssItem.getPubDate();
         this.item_link = rssItem.getLink().toString();
+    }
+
+    public void setInfo(String title, String description,
+                        String pub_date, String item_link){
+        this.title = title;
+        this.description = description;
+        this.pub_date = pub_date;
+        this.item_link = item_link;
     }
 
     public List<ItemInfo> setItemListInfo(List<RssItem> rssItemList) {

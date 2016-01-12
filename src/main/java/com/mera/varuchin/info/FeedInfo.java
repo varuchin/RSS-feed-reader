@@ -35,6 +35,11 @@ public class FeedInfo {
         this.feed_link = rssFeed.getLink().toString();
     }
 
+    public void setInfo(String name, String feed_link){
+        this.name = name;
+        this.feed_link = feed_link;
+    }
+
     public List<FeedInfo> setFeedListInfo(List<RssFeed> rssFeedList) {
         List<FeedInfo> result = new ArrayList<>();
         rssFeedList.stream().forEach(feed -> {

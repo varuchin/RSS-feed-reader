@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class Launcher {
     private static final String BASE_URI = "http://localhost:8081";
 
+    //в один модуль
     private static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig().packages("com.mera.varuchin")
                 .register(new FeedModule())

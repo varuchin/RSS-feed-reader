@@ -24,6 +24,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class FeedResource {
 
+    //в один ио
     @Inject
     RssFeedDAOImpl dao;
 
@@ -31,6 +32,11 @@ public class FeedResource {
     RssItemDAOImpl itemDAO;
 
     public FeedResource() {
+    }
+
+    public void setDAO(RssFeedDAOImpl feedDAO, RssItemDAOImpl itemDAO){
+        this.dao = feedDAO;
+        this.itemDAO = itemDAO;
     }
 
     @GET
@@ -76,7 +82,6 @@ public class FeedResource {
     @Path("/feeds")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(RssFeed rssFeed) {
-        System.out.println(dao);
         if (dao.getByLink(rssFeed.getLink()) == null) {
             dao.add(rssFeed);
             URI location = URI.create("/rss/feeds" + rssFeed.getId());
@@ -94,7 +99,7 @@ public class FeedResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/feeds/{id}")
     public Response update(@PathParam("id") Long id, RssFeed rssFeed) {
-        RssFeed originRssFeed = new RssFeedDAOImpl().getById(id);
+        RssFeed originRssFeed = dao.getById(id);
 
         if (originRssFeed == null) {
             System.err.println("Nothing to update: no such element by this ID.");
@@ -143,12 +148,14 @@ public class FeedResource {
     @POST
     @Path("feeds/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public void postForm(@FormDataParam("DOCUMENT") InputStream document) {
+    public Response postForm(@FormDataParam("DOCUMENT") InputStream document) {
         FeedParser parser = new FeedParser();
         List<RssFeed> feeds = parser.parseFeeds(document);
         if (feeds == null)
             throw new MultiPartQueryException("Unable to read sources from document.");
 
         feeds.stream().forEach(feed -> dao.add(feed));
+        return Response.status(Response.Status.OK).build();
     }
+
 }

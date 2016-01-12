@@ -24,7 +24,6 @@ public final class Refresher implements Runnable {
             Criteria criteria = session.createCriteria(RssFeed.class);
             List<RssFeed> feedInstances = criteria.list();
 
-            System.out.println(feedInstances);
             if (feedInstances != null) {
                 feedInstances.stream()
                         .forEach(instance -> {
