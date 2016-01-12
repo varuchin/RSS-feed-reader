@@ -4,7 +4,7 @@ package com.mera.varuchin.filters;
 import java.util.Base64;
 import java.util.StringTokenizer;
 
-
+@Deprecated
 public class AuthenticationResource {
 
     public boolean authenticate(String authCredentails) {

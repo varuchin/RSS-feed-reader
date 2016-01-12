@@ -73,6 +73,9 @@ public class Rest extends JerseyTest {
                 (new URL("http://feeds.bbci.co.uk/news/health/rss.xml"));
         mockedStartedFeed.setId(1L);
 
+        mockedChangedFeed.setName("ChangedName");
+        mockedChangedFeed.setLink(new URL("ChangedLink"));
+
         Response.ResponseBuilder builder = Response.status(Response.Status.OK);
 
         when(mockedResource
@@ -172,7 +175,8 @@ public class Rest extends JerseyTest {
 
         Thread.sleep(1000);
         List<FeedInfo> beforeDelete = target("/rss/feeds")
-                .request(MediaType.APPLICATION_JSON).get(new GenericType<List<FeedInfo>>() {
+                .request(MediaType.APPLICATION_JSON)
+                .get(new GenericType<List<FeedInfo>>() {
                 });
 
         Thread.sleep(1000);

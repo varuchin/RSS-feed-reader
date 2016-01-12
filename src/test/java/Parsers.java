@@ -13,6 +13,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -49,6 +50,8 @@ public class Parsers {
             CloseableHttpResponse response = httpClient.execute(httpGet);
             HttpEntity httpEntity = response.getEntity();
             itemsStream = httpEntity.getContent();
+
+            InputStream mockedStream = Mockito.mock(InputStream.class);
 
         } catch (ClientProtocolException e) {
             e.printStackTrace();

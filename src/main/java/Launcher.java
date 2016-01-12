@@ -1,5 +1,5 @@
 import com.mera.varuchin.Refresher;
-import com.mera.varuchin.filters.RestAuthenticationFilter;
+import com.mera.varuchin.filters.AuthenticationFilter;
 import com.mera.varuchin.modules.FeedModule;
 import com.mera.varuchin.modules.ItemModule;
 import com.mera.varuchin.rss.RssExecutor;
@@ -24,7 +24,7 @@ public class Launcher {
                 .register(new FeedModule())
                 .register(new ItemModule())
                 .register(LoggingFilter.class)
-                .register(RestAuthenticationFilter.class)
+                .register(AuthenticationFilter.class)
                 .register(MultiPartFeature.class);
 
         return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
