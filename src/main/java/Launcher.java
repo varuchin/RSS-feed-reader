@@ -1,7 +1,6 @@
 import com.mera.varuchin.Refresher;
 import com.mera.varuchin.filters.AuthenticationFilter;
-import com.mera.varuchin.modules.FeedModule;
-import com.mera.varuchin.modules.ItemModule;
+import com.mera.varuchin.modules.RssModule;
 import com.mera.varuchin.rss.RssExecutor;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -22,8 +21,7 @@ public class Launcher {
     //в один модуль
     private static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig().packages("com.mera.varuchin")
-                .register(new FeedModule())
-                .register(new ItemModule())
+                .register(new RssModule())
                 .register(LoggingFilter.class)
                 .register(AuthenticationFilter.class)
                 .register(MultiPartFeature.class);

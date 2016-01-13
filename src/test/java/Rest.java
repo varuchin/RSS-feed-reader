@@ -1,4 +1,6 @@
+import com.mera.varuchin.dao.RssFeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
+import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.dao.RssItemDAOImpl;
 import com.mera.varuchin.exceptions.DataBaseFeedException;
 import com.mera.varuchin.exceptions.FeedNotFoundException;
@@ -6,8 +8,7 @@ import com.mera.varuchin.exceptions.ItemsNotFoundException;
 import com.mera.varuchin.exceptions.NoFeedsFoundException;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
-import com.mera.varuchin.modules.FeedModule;
-import com.mera.varuchin.modules.ItemModule;
+import com.mera.varuchin.modules.RssModule;
 import com.mera.varuchin.resources.FeedResource;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
@@ -17,6 +18,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
@@ -31,19 +33,22 @@ import static org.mockito.Mockito.*;
 public class Rest extends JerseyTest {
 
     private FeedResource resource;
-    private RssFeedDAOImpl feedDAO;
-    private RssItemDAOImpl itemDAO;
+    
+    @Inject
+    RssFeedDAO feedDAO;
+    @Inject
+    RssItemDAO itemDAO;
 
     @Override
     protected Application configure() {
         feedDAO = mock(RssFeedDAOImpl.class);
         itemDAO = mock(RssItemDAOImpl.class);
-
+        resource = new FeedResource();
         //resource = new FeedResource();
         //resource.setDAO(feedDAO, itemDAO);
 
-        return new ResourceConfig(FeedResource.class).register(new FeedModule())
-                .register(new ItemModule())
+        return new ResourceConfig(FeedResource.class)
+                .register(new RssModule())
                 .packages("com.mera.varuchin").register(MultiPartFeature.class);
     }
 

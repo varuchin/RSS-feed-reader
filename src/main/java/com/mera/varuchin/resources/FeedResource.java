@@ -1,7 +1,9 @@
 package com.mera.varuchin.resources;
 
 
+import com.mera.varuchin.dao.RssFeedDAO;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
+import com.mera.varuchin.dao.RssItemDAO;
 import com.mera.varuchin.dao.RssItemDAOImpl;
 import com.mera.varuchin.exceptions.*;
 import com.mera.varuchin.info.FeedInfo;
@@ -26,10 +28,10 @@ public class FeedResource {
 
     //в один ио
     @Inject
-    RssFeedDAOImpl dao;
+    RssFeedDAO dao;
 
     @Inject
-    RssItemDAOImpl itemDAO;
+    RssItemDAO itemDAO;
 
     public FeedResource() {
     }
