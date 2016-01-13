@@ -67,7 +67,7 @@ public class Parsers {
 
         items = parser.parseItems(itemsStream);
 
-        Assert.assertTrue(items.size()!=0);
+        Assert.assertTrue(items.size() != 0);
         Assert.assertNotNull(items);
     }
 
@@ -96,13 +96,13 @@ public class Parsers {
         Assert.assertNotNull(actualFeedList);
         Assert.assertEquals(actualFeedList.size(), expectedFeedList.size());
 
-        IntStream.range(0,3).forEach(index->{
+        IntStream.range(0, 3).forEach(index -> {
 
             Assert.assertTrue(expectedFeedList.get(index).getName()
-            .equals(actualFeedList.get(index).getName()));
+                    .equals(actualFeedList.get(index).getName()));
 
             Assert.assertTrue(expectedFeedList.get(index).getLink().toString()
-            .equals(actualFeedList.get(index).getLink().toString()));
+                    .equals(actualFeedList.get(index).getLink().toString()));
         });
 
 

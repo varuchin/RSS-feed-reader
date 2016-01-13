@@ -14,6 +14,6 @@ public class MultiPartQueryException extends WebApplicationException {
 
     public MultiPartQueryException(String message) {
         super(Response.status(Response.Status.NOT_FOUND)
-                .entity(message).type(MediaType.TEXT_PLAIN).build());
+                .entity(message).type(MediaType.APPLICATION_JSON).build());
     }
 }

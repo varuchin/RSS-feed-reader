@@ -2,9 +2,7 @@ package com.mera.varuchin.resources;
 
 
 import com.mera.varuchin.dao.RssFeedDAO;
-import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.dao.RssItemDAO;
-import com.mera.varuchin.dao.RssItemDAOImpl;
 import com.mera.varuchin.exceptions.*;
 import com.mera.varuchin.info.FeedInfo;
 import com.mera.varuchin.info.ItemInfo;
@@ -26,19 +24,12 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class FeedResource {
 
-    //в один ио
     @Inject
     RssFeedDAO dao;
-
     @Inject
     RssItemDAO itemDAO;
 
     public FeedResource() {
-    }
-
-    public void setDAO(RssFeedDAOImpl feedDAO, RssItemDAOImpl itemDAO){
-        this.dao = feedDAO;
-        this.itemDAO = itemDAO;
     }
 
     @GET
@@ -62,7 +53,7 @@ public class FeedResource {
                                    @QueryParam("name") String name) {
         List<RssFeed> feeds = dao.getFeeds(page, pageSize, name);
         if (feeds.size() == 0)
-            throw new NoFeedsFoundException("No feeds are found in DB.");
+            throw new NoFeedsFoundException("No feeds were found in DB.");
 
         FeedInfo feedInfo = new FeedInfo();
         List<FeedInfo> information = feedInfo.setFeedListInfo(feeds);
@@ -79,7 +70,6 @@ public class FeedResource {
         return information;
     }
 
-    //+
     @POST
     @Path("/feeds")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -118,20 +108,20 @@ public class FeedResource {
         }
     }
 
-    //+
     @DELETE
     @Path("/feeds/{id}")
     public Response remove(@PathParam("id") Long id) {
         RssFeed originRssFeed = dao.getById(id);
         if (originRssFeed == null) {
             System.err.println("RSS item with such ID is not found.");
+
             throw new FeedNotFoundException("RSS item with such ID is not found.");
         }
+
         dao.remove(id);
         return Response.ok().build();
     }
 
-    //+
     @GET
     @Path("/feeds/{feed_id}/items/{item_id}")
     public ItemInfo getBySource(@PathParam("feed_id") Long feed_id,
@@ -148,7 +138,7 @@ public class FeedResource {
 
 
     @POST
-    @Path("feeds/upload")
+    @Path("/feeds/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response postForm(@FormDataParam("DOCUMENT") InputStream document) {
         FeedParser parser = new FeedParser();
@@ -159,5 +149,4 @@ public class FeedResource {
         feeds.stream().forEach(feed -> dao.add(feed));
         return Response.status(Response.Status.OK).build();
     }
-
 }

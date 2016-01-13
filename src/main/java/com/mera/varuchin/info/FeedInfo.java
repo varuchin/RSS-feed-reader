@@ -47,8 +47,7 @@ public class FeedInfo {
             feedInfo.setInfo(feed);
             result.add(feedInfo);
         });
-        System.err.println(result);
-        System.err.println(result.size());
+
         return result;
     }
 }

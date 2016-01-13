@@ -34,8 +34,6 @@ public class RssItem {
     private URL link = null;
 
 
-//    private transient Map<String, Integer> topWords = getTopWords();
-
     public RssItem() {
     }
 

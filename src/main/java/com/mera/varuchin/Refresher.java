@@ -13,8 +13,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-//import com.mera.varuchin.modules.HibernateModule;
-
 public final class Refresher implements Runnable {
 
     Injector injector = Guice.createInjector(new HibernateModule());

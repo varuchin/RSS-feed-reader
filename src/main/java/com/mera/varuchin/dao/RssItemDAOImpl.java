@@ -20,6 +20,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Order;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -29,25 +30,18 @@ import java.util.stream.Stream;
 
 public class RssItemDAOImpl implements RssItemDAO {
 
-    public RssItemDAOImpl(){}
+    public RssItemDAOImpl() {
+    }
 
-    //разбить на отдельные методы (3 степа)
+
     @Override
     public void add(RssFeed rssFeed) {
         RssExecutor rssExecutor = new RssExecutor();
 
         Runnable task = () -> {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpEntity httpEntity = null;
             try {
-                HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
-                RequestConfig config = RequestConfig.custom()
-                        .setProxy(proxy)
-                        .build();
-                HttpGet httpGet = new HttpGet(rssFeed.getLink().toURI());
-                httpGet.setConfig(config);
-
-                CloseableHttpResponse response = httpClient.execute(httpGet);
-                HttpEntity httpEntity = response.getEntity();
+                httpEntity = getEntityFromFeed(rssFeed);
 
                 if (httpEntity != null) {
                     ItemParser parser = new ItemParser();
@@ -59,11 +53,10 @@ public class RssItemDAOImpl implements RssItemDAO {
                         add(item);
                     });
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         };
-
         rssExecutor.run(task);
     }
 
@@ -176,4 +169,17 @@ public class RssItemDAOImpl implements RssItemDAO {
         return sessionProvider.openSession();
     }
 
+    private HttpEntity getEntityFromFeed(RssFeed rssFeed) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
+        RequestConfig config = RequestConfig.custom()
+                .setProxy(proxy)
+                .build();
+        HttpGet httpGet = new HttpGet(rssFeed.getLink().toString());
+        httpGet.setConfig(config);
+
+        CloseableHttpResponse response = httpClient.execute(httpGet);
+        HttpEntity httpEntity = response.getEntity();
+        return httpEntity;
+    }
 }

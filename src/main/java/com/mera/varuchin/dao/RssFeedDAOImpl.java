@@ -39,7 +39,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         try (Session session = getSession()) {
             session.beginTransaction();
             session.save(rssFeed);
-            session.beginTransaction().commit();
+            session.getTransaction().commit();
 
             session.beginTransaction();
             RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
@@ -132,9 +132,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
                 criteria.setMaxResults(pageSize);
                 feeds = criteria.list();
             } else {
-//                String hql = "FROM RssFeed";
-//                Query query = session.createQuery(hql);
-//                feeds = query.list();
+
                 Criteria criteria = session.createCriteria(RssFeed.class);
                 feeds = criteria.list();
             }
