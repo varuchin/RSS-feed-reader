@@ -7,7 +7,7 @@ import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import junit.framework.Assert;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.*;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
@@ -20,8 +20,11 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +39,9 @@ public class Rest extends JerseyTest {
     RssFeedDAO feedDAO;
     @Mock
     RssItemDAO itemDAO;
+
+    @FormDataParam("file")
+    InputStream file;
 
     private class RssModule extends AbstractBinder {
 
@@ -76,7 +82,8 @@ public class Rest extends JerseyTest {
         when(itemDAO.getItems(null, null)).thenReturn(items);
 
         List<ItemInfo> result = target("/rss/items").request()
-                .get(new GenericType<List<ItemInfo>>(){});
+                .get(new GenericType<List<ItemInfo>>() {
+                });
 
         verify(itemDAO).getItems(null, null);
         Assert.assertNotNull(result);
@@ -86,7 +93,7 @@ public class Rest extends JerseyTest {
 
 
     @Test
-    public void testThrowingItemsNotFoundException() {
+    public void testGetNonExistentItem() {
         when(itemDAO.getItems(null, null)).thenReturn(new ArrayList<>());
 
         Response expected = Response.status(Response.Status.NOT_FOUND).build();
@@ -292,26 +299,52 @@ public class Rest extends JerseyTest {
     }
 
 
-//    @Test
-//    public void testMultipartMethod() throws MalformedURLException {
-//        List<RssFeed> feeds = new ArrayList<>();
-//        FeedParser mockedParser = mock(FeedParser.class);
-//        InputStream mockedDocument = mock(InputStream.class);
-//
-//        RssFeed firstFeed = new RssFeed("FirstFeed",
-//                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
-//        RssFeed secondFeed = new RssFeed("SecondFeed",
-//                new URL("http://feeds.bbci.co.uk/news/politics/rss.xml"));
-//
-//        feeds.add(firstFeed);
-//        feeds.add(secondFeed);
-//
-//        when(mockedParser.parseFeeds(mockedDocument)).thenReturn(feeds);
-//
-//        target("/rss/feeds").path("/upload").request()
-//
-//        feeds.stream().forEach(feed->{
-//            when(feed)
-//        });
-//    }
+    @Test
+    public void testMultipartMethod() {
+        String input = "--12\n" +
+                "Content-Disposition: form-data; name=\"file\"; " +
+                "filename=\"file.xml\"\n" +
+                "Content-Type: text/xml\n" +
+                "\n" +
+                "\n" +
+                "<sources>\n" +
+                "  <source>\n" +
+                "     <name>TEST1</name>\n" +
+                "     <link>http://feeds.bbci.co.uk/news/science_and_environment/rss.xml</link>\n" +
+                " </source>\n" +
+                "<source>\n" +
+                "<name>TEST2</name>\n" +
+                "<link>http://feeds.bbci.co.uk/news/politics/rss.xml</link>\n" +
+                "</source>\n" +
+                "<source>\n" +
+                "<name>TEST3</name>\n" +
+                "<link>http://feeds.bbci.co.uk/news/business/rss.xml\n" +
+                "</link>\n" +
+                "</source>\n" +
+                "</sources>\n" +
+                "--12--";
+
+        MultiPart multiPart = new MultiPart();
+        multiPart.bodyPart(new BodyPart(input, MediaType.TEXT_XML_TYPE));
+
+        file = new ByteArrayInputStream(
+                input.getBytes(StandardCharsets.UTF_8));
+        //multiPart.setEntity(input.getBytes());
+        //multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
+
+        FormDataMultiPart formDataMultiPart = new FormDataMultiPart();
+        formDataMultiPart.field("Content-Type", "multipart/form-data; boundary=12");
+        formDataMultiPart.bodyPart(new BodyPart(input, MediaType.TEXT_XML_TYPE));
+
+        //formDataMultiPart.getEntity();
+        //  InputStream inputStream1 = multiPart.getEntityAs(InputStream.class);
+
+        Response expected = Response.status(Response.Status.OK).build();
+        Response result = target("/rss/feeds").path("/upload").request()
+                .post(Entity.entity(file, MediaType.MULTIPART_FORM_DATA));
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.getStatus(), result.getStatus());
+        Assert.assertEquals(result.getStatus(), 200);
+    }
 }

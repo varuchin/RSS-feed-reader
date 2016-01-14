@@ -11,15 +11,10 @@ public interface RssItemDAO {
 
     void add(RssFeed rssFeed);
 
-    void remove(RssItem rssItem);
-
     List<RssItem> getItems(Integer page, Integer pageSize);
-
-    List<RssItem> getAllItemsWithId(Long feed_id);
 
     Map<String, Integer> getTopWords(Long item_id);
 
     RssItem getById(Long id);
-
 
 }

@@ -9,7 +9,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 public class SessionProvider {
     private static volatile SessionFactory sessionFactory = setUp();
 
-    public SessionProvider(){}
     protected static SessionFactory setUp() {
 
         final StandardServiceRegistry registry =

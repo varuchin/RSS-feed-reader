@@ -1,9 +1,6 @@
 package com.mera.varuchin.dao;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
-import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.parsers.ItemParser;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
@@ -28,6 +25,7 @@ import java.util.List;
 
 public class RssFeedDAOImpl implements RssFeedDAO {
 
+    private SessionProvider sessionProvider = new SessionProvider();
     public RssFeedDAOImpl(){}
 
     @Override
@@ -132,7 +130,6 @@ public class RssFeedDAOImpl implements RssFeedDAO {
                 criteria.setMaxResults(pageSize);
                 feeds = criteria.list();
             } else {
-
                 Criteria criteria = session.createCriteria(RssFeed.class);
                 feeds = criteria.list();
             }
@@ -186,9 +183,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         }
     }
 
-    private static Session getSession() {
-        Injector injector = Guice.createInjector(new HibernateModule());
-        SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
+    private Session getSession() {
         return sessionProvider.openSession();
     }
 

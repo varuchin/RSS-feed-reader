@@ -7,11 +7,9 @@ import org.glassfish.jersey.internal.util.Base64;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.Provider;
 import java.util.List;
 import java.util.StringTokenizer;
 
-@Provider
 public class AuthenticationFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_PROPERTY = "Authorization";

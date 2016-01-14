@@ -1,10 +1,7 @@
 package com.mera.varuchin;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.mera.varuchin.dao.RssFeedDAOImpl;
-import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.rss.RssFeed;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -15,8 +12,7 @@ import java.util.List;
 
 public final class Refresher implements Runnable {
 
-    Injector injector = Guice.createInjector(new HibernateModule());
-    SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
+    SessionProvider sessionProvider = new SessionProvider();
 
     @Override
     public void run() {

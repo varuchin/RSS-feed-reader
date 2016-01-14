@@ -1,6 +1,5 @@
 package com.mera.varuchin.parsers;
 
-import com.mera.varuchin.dao.RssFeedDAOImpl;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
 import org.w3c.dom.Document;
@@ -44,7 +43,6 @@ public class FeedParser {
                         String name = nameElem.getFirstChild().getTextContent();
                         String link = linkElem.getFirstChild().getTextContent();
 
-                        RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();
                         RssFeed rssFeed = null;
                         try {
                             rssFeed = new RssFeed(name, new URL(link));
@@ -52,7 +50,6 @@ public class FeedParser {
                             e.printStackTrace();
                         }
                         rssFeeds.add(rssFeed);
-                        //rssFeedDAO.add(rssFeed);
                     });
                 }
             } catch (Exception e) {

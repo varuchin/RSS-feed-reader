@@ -1,9 +1,6 @@
 package com.mera.varuchin.dao;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.mera.varuchin.SessionProvider;
-import com.mera.varuchin.modules.HibernateModule;
 import com.mera.varuchin.parsers.ItemParser;
 import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
@@ -30,9 +27,10 @@ import java.util.stream.Stream;
 
 public class RssItemDAOImpl implements RssItemDAO {
 
+    private static SessionProvider sessionProvider = new SessionProvider();
+
     public RssItemDAOImpl() {
     }
-
 
     @Override
     public void add(RssFeed rssFeed) {
@@ -41,8 +39,8 @@ public class RssItemDAOImpl implements RssItemDAO {
         Runnable task = () -> {
             HttpEntity httpEntity = null;
             try {
-                httpEntity = getEntityFromFeed(rssFeed);
 
+                httpEntity = getEntityFromFeed(rssFeed);
                 if (httpEntity != null) {
                     ItemParser parser = new ItemParser();
                     InputStream inputStream = httpEntity.getContent();
@@ -57,16 +55,8 @@ public class RssItemDAOImpl implements RssItemDAO {
                 e.printStackTrace();
             }
         };
-        rssExecutor.run(task);
-    }
 
-    @Override
-    public void remove(RssItem rssItem) {
-        try (Session session = getSession()) {
-            session.beginTransaction();
-            session.delete(rssItem);
-            session.getTransaction().commit();
-        }
+        rssExecutor.run(task);
     }
 
     @Override
@@ -99,19 +89,6 @@ public class RssItemDAOImpl implements RssItemDAO {
             Query query = session.createQuery(hqlQuery).setParameter("id", id);
             result = (RssItem) query.uniqueResult();
         }
-        return result;
-    }
-
-    @Override
-    public List<RssItem> getAllItemsWithId(Long feed_id) {
-        List<RssItem> result;
-        try (Session session = getSession()) {
-            String hql = "FROM RssItem WHERE FEED_ID = :feed_id";
-            Query query = session.createQuery(hql);
-            query.setParameter("feed_id", feed_id);
-            result = query.list();
-        }
-
         return result;
     }
 
@@ -164,8 +141,6 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     private static Session getSession() {
-        Injector injector = Guice.createInjector(new HibernateModule());
-        SessionProvider sessionProvider = injector.getInstance(SessionProvider.class);
         return sessionProvider.openSession();
     }
 
@@ -182,4 +157,5 @@ public class RssItemDAOImpl implements RssItemDAO {
         HttpEntity httpEntity = response.getEntity();
         return httpEntity;
     }
+
 }

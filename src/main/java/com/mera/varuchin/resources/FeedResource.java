@@ -140,13 +140,21 @@ public class FeedResource {
     @POST
     @Path("/feeds/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postForm(@FormDataParam("DOCUMENT") InputStream document) {
+    public Response postForm(@FormDataParam("file") InputStream file) {
         FeedParser parser = new FeedParser();
-        List<RssFeed> feeds = parser.parseFeeds(document);
+        List<RssFeed> feeds = parser.parseFeeds(file);
+
         if (feeds == null)
             throw new MultiPartQueryException("Unable to read sources from document.");
 
-        feeds.stream().forEach(feed -> dao.add(feed));
+        feeds.stream().forEach(feed -> {
+            if (dao.getByLink(feed.getLink()) == null) {
+                dao.add(feed);
+            } else
+                throw new DataBaseFeedException
+                        ("Some feeds are already in the database.");
+        });
+
         return Response.status(Response.Status.OK).build();
     }
 }
