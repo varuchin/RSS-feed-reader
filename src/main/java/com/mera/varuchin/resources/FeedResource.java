@@ -143,7 +143,7 @@ public class FeedResource {
     public Response postForm(@FormDataParam("file") InputStream file) {
         FeedParser parser = new FeedParser();
         List<RssFeed> feeds = parser.parseFeeds(file);
-
+        
         if (feeds == null)
             throw new MultiPartQueryException("Unable to read sources from document.");
 

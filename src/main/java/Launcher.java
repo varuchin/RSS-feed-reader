@@ -33,7 +33,7 @@ public class Launcher {
         final HttpServer server = startServer();
 
         RssExecutor rssExecutor = new RssExecutor();
-        rssExecutor.run(new Refresher(), 0, 20, TimeUnit.MINUTES);
+        rssExecutor.run(new Refresher(), 0, 1, TimeUnit.MINUTES);
 
         System.in.read();
         server.stop();

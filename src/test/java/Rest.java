@@ -7,7 +7,11 @@ import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import junit.framework.Assert;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.media.multipart.*;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.filter.LoggingFilter;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
@@ -20,11 +24,10 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,9 +56,16 @@ public class Rest extends JerseyTest {
     }
 
     @Override
+    protected void configureClient(ClientConfig config) {
+        config.register(MultiPartFeature.class);
+    }
+
+    @Override
     protected Application configure() {
         return new ResourceConfig(FeedResource.class)
                 .register(new RssModule())
+                .register(LoggingFilter.class)
+                .register(MultiPartFeature.class)
                 .packages("com.mera.varuchin.exceptions",
                         "com.mera.varuchin.parsers",
                         "com.mera.varuchin.rss",
@@ -64,8 +74,7 @@ public class Rest extends JerseyTest {
                         "com.mera.varuchin.factories",
                         "com.mera.varuchin.info",
                         "com.mera.varuchin.parsers",
-                        "com.mera.varuchin.SessionProvider")
-                .register(MultiPartFeature.class);
+                        "com.mera.varuchin.SessionProvider");
     }
 
     @Test
@@ -234,7 +243,6 @@ public class Rest extends JerseyTest {
         Assert.assertEquals(result.getStatus(), 404);
     }
 
-
     @Test
     public void testDeleteExistingFeed() throws MalformedURLException {
         RssFeed rssFeed = new RssFeed("TestFeed",
@@ -300,51 +308,31 @@ public class Rest extends JerseyTest {
 
 
     @Test
-    public void testMultipartMethod() {
-        String input = "--12\n" +
-                "Content-Disposition: form-data; name=\"file\"; " +
-                "filename=\"file.xml\"\n" +
-                "Content-Type: text/xml\n" +
-                "\n" +
-                "\n" +
+    public void testMultipartMethod() throws IOException {
+        String input =
                 "<sources>\n" +
-                "  <source>\n" +
-                "     <name>TEST1</name>\n" +
-                "     <link>http://feeds.bbci.co.uk/news/science_and_environment/rss.xml</link>\n" +
-                " </source>\n" +
-                "<source>\n" +
-                "<name>TEST2</name>\n" +
-                "<link>http://feeds.bbci.co.uk/news/politics/rss.xml</link>\n" +
-                "</source>\n" +
-                "<source>\n" +
-                "<name>TEST3</name>\n" +
-                "<link>http://feeds.bbci.co.uk/news/business/rss.xml\n" +
-                "</link>\n" +
-                "</source>\n" +
-                "</sources>\n" +
-                "--12--";
+                        "  <source>\n" +
+                        "     <name>TEST1</name>\n" +
+                        "     <link>http://feeds.bbci.co.uk/news/science_and_environment/rss.xml</link>\n" +
+                        " </source>\n" +
+                        "<source>\n" +
+                        "<name>TEST2</name>\n" +
+                        "<link>http://feeds.bbci.co.uk/news/politics/rss.xml</link>\n" +
+                        "</source>\n" +
+                        "<source>\n" +
+                        "<name>TEST3</name>\n" +
+                        "<link>http://feeds.bbci.co.uk/news/business/rss.xml\n" +
+                        "</link>\n" +
+                        "</source>\n" +
+                        "</sources>\n";
 
-        MultiPart multiPart = new MultiPart();
-        multiPart.bodyPart(new BodyPart(input, MediaType.TEXT_XML_TYPE));
+        FormDataMultiPart formDataMultiPart = new FormDataMultiPart()
+                .field("file", input);
 
-        file = new ByteArrayInputStream(
-                input.getBytes(StandardCharsets.UTF_8));
-        //multiPart.setEntity(input.getBytes());
-        //multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-
-        FormDataMultiPart formDataMultiPart = new FormDataMultiPart();
-        formDataMultiPart.field("Content-Type", "multipart/form-data; boundary=12");
-        formDataMultiPart.bodyPart(new BodyPart(input, MediaType.TEXT_XML_TYPE));
-
-        //formDataMultiPart.getEntity();
-        //  InputStream inputStream1 = multiPart.getEntityAs(InputStream.class);
-
-        Response expected = Response.status(Response.Status.OK).build();
         Response result = target("/rss/feeds").path("/upload").request()
-                .post(Entity.entity(file, MediaType.MULTIPART_FORM_DATA));
+                .post(Entity.entity(formDataMultiPart, formDataMultiPart.getMediaType()));
 
         Assert.assertNotNull(result);
-        Assert.assertEquals(expected.getStatus(), result.getStatus());
-        Assert.assertEquals(result.getStatus(), 200);
+        Assert.assertEquals(200, result.getStatus());
     }
 }

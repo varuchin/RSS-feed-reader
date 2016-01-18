@@ -6,12 +6,6 @@ import com.mera.varuchin.rss.RssExecutor;
 import com.mera.varuchin.rss.RssFeed;
 import com.mera.varuchin.rss.RssItem;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -40,7 +34,7 @@ public class RssItemDAOImpl implements RssItemDAO {
             HttpEntity httpEntity = null;
             try {
 
-                httpEntity = getEntityFromFeed(rssFeed);
+                httpEntity = RssFeedDAOImpl.getEntityFromFeed(rssFeed);
                 if (httpEntity != null) {
                     ItemParser parser = new ItemParser();
                     InputStream inputStream = httpEntity.getContent();
@@ -144,18 +138,6 @@ public class RssItemDAOImpl implements RssItemDAO {
         return sessionProvider.openSession();
     }
 
-    private HttpEntity getEntityFromFeed(RssFeed rssFeed) throws IOException {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
-        RequestConfig config = RequestConfig.custom()
-                .setProxy(proxy)
-                .build();
-        HttpGet httpGet = new HttpGet(rssFeed.getLink().toString());
-        httpGet.setConfig(config);
 
-        CloseableHttpResponse response = httpClient.execute(httpGet);
-        HttpEntity httpEntity = response.getEntity();
-        return httpEntity;
-    }
 
 }

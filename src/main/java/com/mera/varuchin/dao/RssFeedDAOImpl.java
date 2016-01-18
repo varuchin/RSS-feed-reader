@@ -16,6 +16,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -156,15 +157,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
         try {
-            HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
-            RequestConfig config = RequestConfig.custom()
-                    .setProxy(proxy)
-                    .build();
-            HttpGet httpGet = new HttpGet(rssFeed.getLink().toURI());
-            httpGet.setConfig(config);
-
-            CloseableHttpResponse response = httpClient.execute(httpGet);
-            HttpEntity httpEntity = response.getEntity();
+            HttpEntity httpEntity = getEntityFromFeed(rssFeed);
 
             if (httpEntity != null) {
                 ItemParser parser = new ItemParser();
@@ -181,6 +174,20 @@ public class RssFeedDAOImpl implements RssFeedDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static HttpEntity getEntityFromFeed(RssFeed rssFeed) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpHost proxy = new HttpHost("proxy.merann.ru", 8080, "http");
+        RequestConfig config = RequestConfig.custom()
+                .setProxy(proxy)
+                .build();
+        HttpGet httpGet = new HttpGet(rssFeed.getLink().toString());
+        httpGet.setConfig(config);
+
+        CloseableHttpResponse response = httpClient.execute(httpGet);
+        HttpEntity httpEntity = response.getEntity();
+        return httpEntity;
     }
 
     private Session getSession() {
