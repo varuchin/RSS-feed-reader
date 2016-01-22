@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface RssItemDAO {
 
-    void add(RssFeed rssFeed);
+    void addItems(RssFeed rssFeed);
 
     List<RssItem> getItems(Integer page, Integer pageSize);
 

@@ -26,7 +26,7 @@ public final class Refresher implements Runnable {
                             ZonedDateTime currentTime = ZonedDateTime.now();
 
                             long timeDifference = ChronoUnit.MINUTES
-                                    .between(instance.getModificationTime(), currentTime);
+                                    .between(ZonedDateTime.parse(instance.getModification_Time()), currentTime);
 
                             if (timeDifference >= 10) {
                                 RssFeedDAOImpl rssFeedDAO = new RssFeedDAOImpl();

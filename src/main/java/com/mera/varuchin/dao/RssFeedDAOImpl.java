@@ -42,7 +42,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
 
             session.beginTransaction();
             RssItemDAOImpl rssItemDAO = new RssItemDAOImpl();
-            rssItemDAO.add(rssFeed);
+            rssItemDAO.addItems(rssFeed);
 
             session.getTransaction().commit();
         }
@@ -72,7 +72,7 @@ public class RssFeedDAOImpl implements RssFeedDAO {
     public void refresh(RssFeed rssFeed) {
         deleteItems(rssFeed);
         addItems(rssFeed);
-        rssFeed.setModificationTime(ZonedDateTime.now());
+        rssFeed.setModification_Time(ZonedDateTime.now().toString());
     }
 
     @Override

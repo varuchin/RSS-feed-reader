@@ -82,6 +82,7 @@ public class FeedResource {
         } else {
             FeedInfo feedInfo = new FeedInfo();
             feedInfo.setInfo(rssFeed);
+
             System.err.println("Such feed is already in the DB");
             throw new DataBaseFeedException("Such feed is already in the DB", feedInfo);
         }
@@ -140,10 +141,10 @@ public class FeedResource {
     @POST
     @Path("/feeds/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response postForm(@FormDataParam("file") InputStream file) {
+    public Response upload(@FormDataParam("file") InputStream file) {
         FeedParser parser = new FeedParser();
         List<RssFeed> feeds = parser.parseFeeds(file);
-        
+
         if (feeds == null)
             throw new MultiPartQueryException("Unable to read sources from document.");
 

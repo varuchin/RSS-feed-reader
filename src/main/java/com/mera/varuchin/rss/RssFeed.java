@@ -26,7 +26,7 @@ public class RssFeed {
     private Set<RssItem> items = new HashSet<>();
 
     @Column
-    private ZonedDateTime modificationTime = ZonedDateTime.now();
+    private String modification_Time = ZonedDateTime.now().toString();
 
     public RssFeed() {
     }
@@ -73,11 +73,11 @@ public class RssFeed {
         this.link = link;
     }
 
-    public ZonedDateTime getModificationTime() {
-        return modificationTime;
+    public String getModification_Time() {
+        return modification_Time;
     }
 
-    public void setModificationTime(ZonedDateTime modificationTime) {
-        this.modificationTime = modificationTime;
+    public void setModification_Time(String modification_Time) {
+        this.modification_Time = modification_Time;
     }
 }

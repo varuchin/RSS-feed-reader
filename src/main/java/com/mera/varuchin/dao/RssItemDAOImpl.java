@@ -27,7 +27,7 @@ public class RssItemDAOImpl implements RssItemDAO {
     }
 
     @Override
-    public void add(RssFeed rssFeed) {
+    public void addItems(RssFeed rssFeed) {
         RssExecutor rssExecutor = new RssExecutor();
 
         Runnable task = () -> {
